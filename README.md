@@ -1,13 +1,30 @@
-# planar_rooks
+# Planar Rook Algebras
 
-## GitHub configuration
+[![Lean Action CI](https://github.com/rspencer01/planar_rooks/actions/workflows/lean_action_ci.yml/badge.svg)](https://github.com/rspencer01/planar_rooks/actions/workflows/lean_action_ci.yml)
 
-To set up your new GitHub repository, follow these steps:
+This repository contains a very rough and incredibly verbose attempt to derive a theory of the representation theory of Planar Rook Algebras.
 
-* Under your repository name, click **Settings**.
-* In the **Actions** section of the sidebar, click "General".
-* Check the box **Allow GitHub Actions to create and approve pull requests**.
-* Click the **Pages** section of the settings sidebar.
-* In the **Source** dropdown menu, select "GitHub Actions".
+For an introduction see [[FHH08]](https://arxiv.org/pdf/0806.3960). The representation theory link to algebraic groups (outside scope but motivating) can be read in [[BM12]](https://arxiv.org/pdf/1201.2482) and homological motivation (also outside scope) can be found in [[Kho12]](https://arxiv.org/pdf/1101.0293).
 
-After following the steps above, you can remove this section from the README file.
+This project will aim to show the cellularity of the algebras and that their representation theory depends only on whether δ is nonzero.
+
+### Progress
+This is an incomplete list of things that need to be done.
+
+#### Planar Rook Monoid
+ * [x] Definition of diagrams
+ * [x] Definition of monoid
+ * [ ] Cardinality of monoid
+ * [ ] Factorisations of 
+ * [ ] Epi-mono factorisation of elements
+ * [ ] Cardinality of epi and mono elements
+ * [ ] The involution
+
+#### Cellular Algebras
+ * [ ] Defintions of cellular algebras
+ * [ ] Statements of results in cellular algebras
+
+#### Representation theory of Planar Rook Algebras
+ * [ ] Proof of cellularity
+ * [ ] Dimensions of cell modules
+ * [ ] Irreducibility of cell modules if parameter doesn't vanish
