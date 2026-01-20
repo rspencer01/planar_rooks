@@ -20,6 +20,9 @@ This is an incomplete list of things that need to be done.
  * [ ] Cardinality of epi and mono elements
  * [ ] The involution
 
+#### Planar Rook Algebra
+ * [ ] Definition
+
 #### Cellular Algebras
  * [ ] Defintions of cellular algebras
  * [ ] Statements of results in cellular algebras
