@@ -213,7 +213,10 @@ variable {n m : ℕ}
 def fi {n m k : ℕ}
   (d₁ : PlanarRookDiagram n m)
   (d₂ : PlanarRookDiagram m k) :
-    ({x | ∃ (h : x ∈ d₁.left_defects), ↑(d₁.lr_bijection ⟨x, h⟩) ∈ d₂.left_defects} : Finset (Fin n)) → { y | ∃ (h : y ∈ d₂.right_defects), ↑(d₂.lr_bijection.symm ⟨y, h⟩) ∈ d₁.right_defects } := fun ⟨x, hx⟩ =>
+    ({x | ∃ (h : x ∈ d₁.left_defects),
+           ↑(d₁.lr_bijection ⟨x, h⟩) ∈ d₂.left_defects} : Finset (Fin n)) →
+     { y | ∃ (h : y ∈ d₂.right_defects),
+           ↑(d₂.lr_bijection.symm ⟨y, h⟩) ∈ d₁.right_defects } := fun ⟨x, hx⟩ =>
         ⟨↑(d₂.lr_bijection.toFun ⟨d₁.lr_bijection.toFun ⟨x , by
           simp at hx
           exact hx.choose
@@ -225,7 +228,11 @@ def fi {n m k : ℕ}
        ⟩
 def fj {n m k : ℕ}
   (d₁ : PlanarRookDiagram n m)
-  (d₂ : PlanarRookDiagram m k)  : ({ y | ∃ (h : y ∈ d₂.right_defects), ↑(d₂.lr_bijection.symm ⟨y, h⟩) ∈ d₁.right_defects } : Finset (Fin k)) → {x | ∃ (h : x ∈ d₁.left_defects), ↑(d₁.lr_bijection ⟨x, h⟩) ∈ d₂.left_defects} := fun ⟨y, hy⟩ =>
+  (d₂ : PlanarRookDiagram m k) :
+    ({ y | ∃ (h : y ∈ d₂.right_defects),
+         ↑(d₂.lr_bijection.symm ⟨y, h⟩) ∈ d₁.right_defects } : Finset (Fin k)) →
+     {x | ∃ (h : x ∈ d₁.left_defects),
+         ↑(d₁.lr_bijection ⟨x, h⟩) ∈ d₂.left_defects} := fun ⟨y, hy⟩ =>
         ⟨↑(d₁.lr_bijection.invFun ⟨↑(d₂.lr_bijection.invFun ⟨y, by
           simp at hy
           exact hy.choose
@@ -394,7 +401,7 @@ def PlanarRookDiagram.restate_mul₃ {n m k : ℕ}
         rw [Subsingleton.elim f]
        rw [kk]
 
-def PlanarRookDiagram.restate_mul₄ {n m k: ℕ}
+def PlanarRookDiagram.restate_mul₄ {n m k : ℕ}
   (d₁ : PlanarRookDiagram n m)
   (d₂ : PlanarRookDiagram m k)
   (x : Fin k)
@@ -409,15 +416,94 @@ def PlanarRookDiagram.restate_mul₄ {n m k: ℕ}
       rw [y]
       exact hy
 
-def PlanarRookDiagram.restate_mul₅ {n m k: ℕ}
+def PlanarRookDiagram.restate_mul₅ {n m k : ℕ}
   (d₁ : PlanarRookDiagram n m)
   (d₂ : PlanarRookDiagram m k)
   (x : Fin k)
   (hxx : x ∈ d₂.right_defects)
   (y : Fin m)
   (hx : d₂.lr_bijection.symm ⟨x, hxx⟩ = y ∧ y ∈ d₁.right_defects) :
-    ↑((d₁.mul₂ d₂).lr_bijection.symm ⟨x, PlanarRookDiagram.restate_mul₄ d₁ d₂ x hxx y hx⟩)
-     = (d₁.lr_bijection.symm ⟨y, hx.2⟩ : Fin n) := by sorry
+    ((d₁.mul₂ d₂).lr_bijection.symm ⟨x, PlanarRookDiagram.restate_mul₄ d₁ d₂ x hxx y hx⟩)
+     = (⟨d₁.lr_bijection.symm ⟨y, hx.2⟩, by
+       unfold PlanarRookDiagram.mul₂
+       simp only [Finset.mem_filter, Finset.mem_univ, Subtype.coe_eta, OrderIso.apply_symm_apply,
+         SetLike.coe_mem, exists_const, true_and]
+       rw [←hx.1]
+       simp
+       ⟩ : (d₁.mul₂ d₂).left_defects) := by
+         rcases hx with ⟨hx₁, hx₂⟩
+         conv => {
+          rhs
+          arg 1
+          arg 1
+          arg 2
+          arg 1
+          rw [←hx₁]
+         }
+         let f := (d₁.mul₂ d₂).lr_bijection.symm
+         let g : ↥(d₁.mul₂ d₂).right_defects ≃o ↥(d₁.mul₂ d₂).left_defects := {
+            toFun := fun ⟨y, hy⟩ => ⟨d₁.lr_bijection.symm ⟨d₂.lr_bijection.symm ⟨y, by
+              unfold PlanarRookDiagram.mul₂ at hy
+              simp at hy
+              exact hy.choose
+            ⟩, by
+              unfold PlanarRookDiagram.mul₂ at hy
+              simp at hy
+              exact hy.choose_spec
+            ⟩, by
+              unfold PlanarRookDiagram.mul₂
+              simp
+            ⟩
+            invFun := fun ⟨x, hx⟩ => ⟨d₂.lr_bijection.toFun ⟨d₁.lr_bijection.toFun ⟨x, by
+              unfold PlanarRookDiagram.mul₂ at hx
+              simp at hx
+              exact hx.choose
+            ⟩, by
+              unfold PlanarRookDiagram.mul₂ at hx
+              simp at hx
+              exact hx.choose_spec
+            ⟩, by
+              unfold PlanarRookDiagram.mul₂
+              simp
+            ⟩
+            map_rel_iff' := by simp
+            left_inv := by
+              intro h
+              simp
+            right_inv := by
+              intro h
+              simp
+         }
+         have kk : ↑((d₁.mul₂ d₂).lr_bijection.symm ⟨x, by
+           unfold PlanarRookDiagram.mul₂
+           simp only [Finset.mem_filter, Finset.mem_univ, true_and]
+           use hxx
+           rw[hx₁]
+           exact hx₂
+          ⟩) = f ⟨x, by
+             unfold PlanarRookDiagram.mul₂
+             simp only [Finset.mem_filter, Finset.mem_univ, true_and]
+             use hxx
+             rw[hx₁]
+             exact hx₂⟩ := by rfl
+         rw [kk]
+         have kk : ⟨↑(d₁.lr_bijection.symm ⟨↑(d₂.lr_bijection.symm ⟨x, hxx⟩), by
+           rw [hx₁]
+           exact hx₂
+           ⟩), by
+             unfold PlanarRookDiagram.mul₂
+             simp
+          ⟩ = g ⟨x, by
+             unfold PlanarRookDiagram.mul₂
+             simp only [Finset.mem_filter, Finset.mem_univ, true_and]
+             use hxx
+             rw [hx₁]
+             exact hx₂
+           ⟩ := by rfl
+         rw [kk]
+         have kk : f = g := by
+           rw [Subsingleton.elim f]
+         rw [kk]
 
 def PlanarRookDiagram.mul_assoc₃ {n m k l : ℕ}
   (d₁ : PlanarRookDiagram n m)
@@ -522,7 +608,7 @@ def PlanarRookDiagram.mul_assoc₃ {n m k l : ℕ}
          use hd
          have kk := PlanarRookDiagram.restate_mul₅ d₂ d₃ x hc (d₃.lr_bijection.symm ⟨x, hc⟩)
            ⟨rfl, hd⟩
-         rw [←kk]
+         rw [kk] at hb
          exact hb
 
 #eval (PlanarRookDiagram.mul₂ (PlanarRookDiagram.example_1) (PlanarRookDiagram.id 5)).act 4
