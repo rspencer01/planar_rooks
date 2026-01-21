@@ -89,6 +89,21 @@ def PlanarRookDiagram.example_2 : PlanarRookDiagram 5 3 :=
   , right_defects := {1, 2}
   , consistant := by simp }
 
+-- A diagram has a "through-index": the number of defects on each side
+-- Diagrammatically, this is the number of lines connecting left and right vertices
+def PlanarRookDiagram.through_index {n m : ℕ}
+  (d : PlanarRookDiagram n m) : ℕ :=
+    d.left_defects.card
+
+theorem PlanarRookDiagram.through_index_eq_right {n m : ℕ}
+  (d : PlanarRookDiagram n m) :
+  d.through_index = d.right_defects.card := by
+    rw [PlanarRookDiagram.through_index]
+    rw [d.consistant]
+
+theorem PlanarRookDiagram.through_index_of_id {n : ℕ} :
+  (PlanarRookDiagram.id n).through_index = n := by
+    simp [PlanarRookDiagram.through_index, PlanarRookDiagram.id]
 
 -- A diagram defines a bijection between left and right defects
 def PlanarRookDiagram.lr_bijection {n m : ℕ}
@@ -161,52 +176,11 @@ by
   ]
   simp [PlanarRookDiagram.id]
 
-
-
 -- The action of the empty diagram is nowhere defined
 def PlanarRookDiagram.act_of_empty {n m : ℕ} (i : Fin n) :
   PlanarRookDiagram.act (PlanarRookDiagram.empty n m) i = none :=
 by
   simp [PlanarRookDiagram.act, PlanarRookDiagram.empty]
-
--- From a planar rook diagram, we can construct a partial equivalence
--- between Fin n and Fin m corresponding to its action.
-def PlanarRookDiagram.to_pequiv {n m : ℕ} (d : PlanarRookDiagram n m) :
-  PEquiv (Fin n) (Fin m) :=
-  {
-    toFun := d.act,
-    invFun := fun j =>
-      if h : j ∈ d.right_defects then
-        some (d.lr_bijection.symm ⟨j, h⟩)
-      else
-        none,
-    inv := by
-      simp only [Option.dite_none_right_eq_some, Option.some.injEq]
-      intro a b
-      constructor
-      · intro ⟨x, y⟩
-        rw [← y]
-        unfold PlanarRookDiagram.act
-        simp
-      · intro h
-        unfold PlanarRookDiagram.act at h
-        simp only [Option.dite_none_right_eq_some, Option.some.injEq] at h
-        rcases h with ⟨t, u⟩
-        rw [← u]
-        simp
-  }
-
--- The partial equivalence corresponding to the identity diagram is
--- the identity partial equivalence.
-def PlanarRookDiagram.pequiv_of_id_is_id {n : ℕ} :
-  PlanarRookDiagram.to_pequiv (PlanarRookDiagram.id n) =
-    PEquiv.refl (Fin n) := by
-    apply PEquiv.ext_iff.mpr
-    intro x
-    simp only [PEquiv.refl_apply]
-    unfold PlanarRookDiagram.to_pequiv
-    simp only [PEquiv.coe_mk]
-    rw [PlanarRookDiagram.act_of_id]
 
 variable {n m : ℕ}
 
@@ -620,3 +594,31 @@ instance PlanarRookMonoid : Monoid (PlanarRookDiagram n n) := {
   one_mul := PlanarRookDiagram.id_mul₂,
   mul_assoc := PlanarRookDiagram.mul_assoc₃
 }
+
+-- When multiplying two diagrams, we are left with a number of disconnected
+-- components. The number of these is the exponent in the planar rook algebra's
+-- multiplication.
+def PlanarRookMonoid.mul_exponent {n m k : ℕ}
+  (d₁ : PlanarRookDiagram n m)
+  (d₂ : PlanarRookDiagram m k) :
+  ℤ :=
+    m - d₁.through_index - d₂.through_index + (d₁.mul₂ d₂).through_index
+
+def PlanarRookMonoid.mul_exponent_eq_zero_of_id {n : ℕ}
+  (d : PlanarRookDiagram n n) :
+  PlanarRookMonoid.mul_exponent d (PlanarRookDiagram.id n) = 0 := by
+    simp [PlanarRookMonoid.mul_exponent,
+          PlanarRookDiagram.through_index_of_id,
+          PlanarRookDiagram.mul₂_id]
+
+def PlanarRookMonoid.mul_exponent_assoc {n m k l : ℕ}
+  (d₁ : PlanarRookDiagram n m)
+  (d₂ : PlanarRookDiagram m k)
+  (d₃ : PlanarRookDiagram k l) :
+  PlanarRookMonoid.mul_exponent d₁ d₂ +
+  PlanarRookMonoid.mul_exponent (d₁.mul₂ d₂) d₃ =
+  PlanarRookMonoid.mul_exponent d₁ (d₂.mul₂ d₃) +
+  PlanarRookMonoid.mul_exponent d₂ d₃ := by
+    unfold PlanarRookMonoid.mul_exponent
+    simp [PlanarRookDiagram.mul_assoc₃]
+    ring
