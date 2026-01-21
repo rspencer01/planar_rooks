@@ -29,8 +29,9 @@ import Mathlib.Order.Fin.Basic
 
 import PlanarRooks.OrderIso
 
--- A planar rook diagram with n left vertices and m right vertices is given by
--- specifying which left and right vertices are "defects" (connected to eachother)
+/-- A planar rook diagram with n left vertices and m right vertices is given by
+    specifying which left and right vertices are "defects" (connected to eachother)
+-/
 structure PlanarRookDiagram (n m : ℕ) where
   (left_defects : Finset (Fin n))
   (right_defects : Finset (Fin m))
@@ -58,27 +59,30 @@ instance : Finite (PlanarRookDiagram n m) := by
   apply PlanarRookDiagram.ext
   · exact h.1
   · exact h.2
+noncomputable instance : Fintype (PlanarRookDiagram n m) := by
+  apply Fintype.ofFinite
 
--- The empty diagram has no defects
+/-- The empty diagram has no defects -/
 def PlanarRookDiagram.empty (n m : ℕ) : PlanarRookDiagram n m :=
   { left_defects := ∅
   , right_defects := ∅
   , consistant := by simp }
 
--- The identity diagram has all vertices as defects
+/-- The identity diagram has all vertices as defects -/
 def PlanarRookDiagram.id (n : ℕ) : PlanarRookDiagram n n :=
   { left_defects := Finset.univ
   , right_defects := Finset.univ
   , consistant := by simp }
 
--- This is the diagram
--- ```
--- ──────╮    ╾─
--- ────╮ │    ╾─
--- ─╼  │ ╰-─────
--- ─╼  ╰-───────
---            ╾─
--- ```
+/-- This is the diagram
+```
+──────╮    ╾─
+────╮ │    ╾─
+─╼  │ ╰-─────
+─╼  ╰-───────
+           ╾─
+```
+-/
 def PlanarRookDiagram.example_1 : PlanarRookDiagram 4 5 :=
   { left_defects := {0, 2}
   , right_defects := {2, 3}
