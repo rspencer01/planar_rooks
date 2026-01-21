@@ -15,7 +15,7 @@ This is an incomplete list of things that need to be done.
  * [x] Definition of diagrams
  * [x] Definition of monoid
  * [ ] Cardinality of monoid
- * [ ] Factorisations of 
+ * [x] Counting loose strands
  * [ ] Epi-mono factorisation of elements
  * [ ] Cardinality of epi and mono elements
  * [ ] The involution
