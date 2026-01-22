@@ -626,3 +626,21 @@ def PlanarRookMonoid.mul_exponent_assoc {n m k l : ℕ}
     unfold PlanarRookMonoid.mul_exponent
     simp [PlanarRookDiagram.mul_assoc₃]
     ring
+
+def PlanarRookDiagram.ι : PlanarRookDiagram n m → PlanarRookDiagram m n := fun d =>{
+  left_defects := d.right_defects,
+  right_defects := d.left_defects,
+  consistant := by rw [d.consistant]
+}
+
+def PlanarRookDiagram.ι_involutive {n m : ℕ}
+  (d : PlanarRookDiagram n m) :
+  PlanarRookDiagram.ι (PlanarRookDiagram.ι d) = d := by
+    apply PlanarRookDiagram.ext
+    · simp [PlanarRookDiagram.ι]
+    · simp [PlanarRookDiagram.ι]
+
+def PlanarRookDiagram.ι_lr_bijection {n m : ℕ}
+  (d : PlanarRookDiagram n m) :
+  d.ι.lr_bijection = d.lr_bijection.symm := by
+    exact Subsingleton.elim _ _
