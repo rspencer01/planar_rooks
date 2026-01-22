@@ -58,7 +58,7 @@ noncomputable def PlanarRookAlgebra.mul' (x y : PlanarRookAlgebra n δ) : Planar
   ∑ d₁ : (PlanarRookDiagram n n),
     ∑ d₂ : (PlanarRookDiagram n n),
       ((x d₁) * (y d₂)) •
-        (PlanarRookAlgebra.single δ (d₁.mul₂ d₂) (δ ^ PlanarRookMonoid.mul_exponent d₁ d₂))
+        (PlanarRookAlgebra.single δ (d₁ * d₂) (δ ^ PlanarRookMonoid.mul_exponent d₁ d₂))
 
 def PlanarRookAlgebra.one : PlanarRookAlgebra n δ :=
   PlanarRookAlgebra.single δ (PlanarRookDiagram.id n) 1
@@ -75,7 +75,7 @@ theorem PlanarRookAlgebra.mul_def (x y : PlanarRookAlgebra n δ) :
       ∑ d₁ : (PlanarRookDiagram n n),
         ∑ d₂ : (PlanarRookDiagram n n),
           ((x d₁) * (y d₂)) •
-            (PlanarRookAlgebra.single δ (d₁.mul₂ d₂) (δ ^ PlanarRookMonoid.mul_exponent d₁ d₂)) :=
+            (PlanarRookAlgebra.single δ (d₁ * d₂) (δ ^ PlanarRookMonoid.mul_exponent d₁ d₂)) :=
   rfl
 
 theorem PlanarRookAlgebra.mul_apply (x y : PlanarRookAlgebra n δ) :
@@ -94,8 +94,7 @@ theorem PlanarRookAlgebra.mul_apply (x y : PlanarRookAlgebra n δ) :
   intro x₁ hx₁
   apply Finset.sum_congr rfl
   intro x₂ hx₂
-  have mul_def : x₁ * x₂ = x₁.mul₂ x₂ := rfl
-  simp[eq_comm, mul_def]
+  simp[eq_comm]
 
 
 noncomputable instance (δ : k) : NonUnitalSemiring (PlanarRookAlgebra n δ) := {
@@ -114,7 +113,8 @@ noncomputable instance (δ : k) : NonUnitalSemiring (PlanarRookAlgebra n δ) := 
     by_cases h : x * y = d
     · simp[h]
       ring
-    · simp[h]
+    · simp only [h]
+      simp
   right_distrib := fun a b c => by
     ext d
     simp only [PlanarRookAlgebra.add_coeff]
@@ -130,7 +130,8 @@ noncomputable instance (δ : k) : NonUnitalSemiring (PlanarRookAlgebra n δ) := 
     by_cases h : x * y = d
     · simp[h]
       ring
-    · simp[h]
+    · simp only [h]
+      simp
   zero_mul := by simp [PlanarRookAlgebra.mul_def]
   mul_zero := by simp [PlanarRookAlgebra.mul_def]
   mul_assoc := sorry

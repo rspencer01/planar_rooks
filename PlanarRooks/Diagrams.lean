@@ -252,9 +252,21 @@ def PlanarRookDiagram.mul₂ {n m k : ℕ}
         simp
   }
 
+instance PlanarRookDiagram.has_hmul :
+  HMul (PlanarRookDiagram n m) (PlanarRookDiagram m k) (PlanarRookDiagram n k)  :=
+  ⟨PlanarRookDiagram.mul₂⟩
+
+@[simp]
+def PlanarRookDiagram.hmul_eq_mul₂ {n m k : ℕ}
+  (d₁ : PlanarRookDiagram n m)
+  (d₂ : PlanarRookDiagram m k) :
+  d₁ * d₂ = PlanarRookDiagram.mul₂ d₁ d₂ := by
+    rfl
+
 def PlanarRookDiagram.mul₂_id {n m : ℕ}
   (d : PlanarRookDiagram n m) :
-  PlanarRookDiagram.mul₂ d (PlanarRookDiagram.id m) = d := by
+  d * (PlanarRookDiagram.id m) = d := by
+    rw [PlanarRookDiagram.hmul_eq_mul₂]
     unfold PlanarRookDiagram.mul₂
     apply PlanarRookDiagram.ext
     · unfold PlanarRookDiagram.id
@@ -266,7 +278,8 @@ def PlanarRookDiagram.mul₂_id {n m : ℕ}
 
 def PlanarRookDiagram.id_mul₂ {n m : ℕ}
   (d : PlanarRookDiagram n m) :
-  PlanarRookDiagram.mul₂ (PlanarRookDiagram.id n) d = d := by
+  (PlanarRookDiagram.id n) * d = d := by
+    rw [PlanarRookDiagram.hmul_eq_mul₂]
     unfold PlanarRookDiagram.mul₂
     apply PlanarRookDiagram.ext
     · simp only
@@ -401,7 +414,7 @@ def PlanarRookDiagram.restate_mul₅ {n m k : ℕ}
   (hxx : x ∈ d₂.right_defects)
   (y : Fin m)
   (hx : d₂.lr_bijection.symm ⟨x, hxx⟩ = y ∧ y ∈ d₁.right_defects) :
-    ((d₁.mul₂ d₂).lr_bijection.symm ⟨x, PlanarRookDiagram.restate_mul₄ d₁ d₂ x hxx y hx⟩)
+    ((d₁ * d₂).lr_bijection.symm ⟨x, PlanarRookDiagram.restate_mul₄ d₁ d₂ x hxx y hx⟩)
      = (⟨d₁.lr_bijection.symm ⟨y, hx.2⟩, by
        unfold PlanarRookDiagram.mul₂
        simp only [Finset.mem_filter, Finset.mem_univ, Subtype.coe_eta, OrderIso.apply_symm_apply,
@@ -452,7 +465,8 @@ def PlanarRookDiagram.restate_mul₅ {n m k : ℕ}
               intro h
               simp
          }
-         have kk : ↑((d₁.mul₂ d₂).lr_bijection.symm ⟨x, by
+         have kk : ↑((d₁ * d₂).lr_bijection.symm ⟨x, by
+           rw [PlanarRookDiagram.hmul_eq_mul₂]
            unfold PlanarRookDiagram.mul₂
            simp only [Finset.mem_filter, Finset.mem_univ, true_and]
            use hxx
@@ -487,7 +501,7 @@ def PlanarRookDiagram.mul_assoc₃ {n m k l : ℕ}
   (d₁ : PlanarRookDiagram n m)
   (d₂ : PlanarRookDiagram m k)
   (d₃ : PlanarRookDiagram k l) :
-  (d₁.mul₂ d₂).mul₂ d₃ = d₁.mul₂ (d₂.mul₂ d₃) := by
+  (d₁.mul₂ d₂).mul₂ d₃ = d₁.mul₂ (d₂ * d₃) := by
      apply PlanarRookDiagram.ext
      · conv => {
          lhs
@@ -512,6 +526,7 @@ def PlanarRookDiagram.mul_assoc₃ {n m k l : ℕ}
          simp only [Finset.mem_filter, Finset.mem_univ, true_and] at ha
          rcases ha with ⟨hc, hd⟩
          use hc
+         rw [PlanarRookDiagram.hmul_eq_mul₂]
          unfold PlanarRookDiagram.mul₂
          simp only [Finset.mem_filter, Finset.mem_univ, true_and]
          use hd
@@ -519,7 +534,7 @@ def PlanarRookDiagram.mul_assoc₃ {n m k l : ℕ}
          rw [kk] at hb
          exact hb
        · intro h
-         simp only at h
+         simp only [PlanarRookDiagram.hmul_eq_mul₂] at h
          simp only [Finset.mem_filter, Finset.mem_univ, true_and]
          conv at h => {
             unfold PlanarRookDiagram.mul₂
@@ -559,6 +574,7 @@ def PlanarRookDiagram.mul_assoc₃ {n m k l : ℕ}
            rcases ha with ⟨hb, hc⟩
            exact hb,
           by
+           have ki : (d₂ * d₃) = d₂.mul₂ d₃ := by rfl
            unfold PlanarRookDiagram.mul₂ at ha
            simp only [Finset.mem_filter, Finset.mem_univ, true_and] at ha
            rcases ha with ⟨hb, hc⟩
@@ -577,6 +593,7 @@ def PlanarRookDiagram.mul_assoc₃ {n m k l : ℕ}
          simp only [Finset.mem_filter, Finset.mem_univ, true_and] at h
          rcases h with ⟨ha, hb⟩
          simp only [Finset.mem_filter, Finset.mem_univ, true_and]
+         rw [PlanarRookDiagram.hmul_eq_mul₂] at ha
          unfold PlanarRookDiagram.mul₂ at ha
          simp only [Finset.mem_filter, Finset.mem_univ, true_and] at ha
          rcases ha with ⟨hc, hd⟩
@@ -592,7 +609,7 @@ def PlanarRookDiagram.mul_assoc₃ {n m k l : ℕ}
 #eval (PlanarRookDiagram.mul₂ (PlanarRookDiagram.example_1) (PlanarRookDiagram.id 5)).act 4
 
 instance PlanarRookMonoid : Monoid (PlanarRookDiagram n n) := {
-  mul := PlanarRookDiagram.mul₂,
+  mul := HMul.hMul,
   one := PlanarRookDiagram.id n,
   mul_one := PlanarRookDiagram.mul₂_id,
   one_mul := PlanarRookDiagram.id_mul₂,
@@ -606,22 +623,22 @@ def PlanarRookMonoid.mul_exponent {n m k : ℕ}
   (d₁ : PlanarRookDiagram n m)
   (d₂ : PlanarRookDiagram m k) :
   ℤ :=
-    m - d₁.through_index - d₂.through_index + (d₁.mul₂ d₂).through_index
+    m - d₁.through_index - d₂.through_index + (d₁ * d₂).through_index
 
 def PlanarRookMonoid.mul_exponent_eq_zero_of_id {n : ℕ}
   (d : PlanarRookDiagram n n) :
   PlanarRookMonoid.mul_exponent d (PlanarRookDiagram.id n) = 0 := by
-    simp [PlanarRookMonoid.mul_exponent,
-          PlanarRookDiagram.through_index_of_id,
-          PlanarRookDiagram.mul₂_id]
+    simp only [PlanarRookMonoid.mul_exponent]
+    simp only [PlanarRookDiagram.mul₂_id]
+    simp [PlanarRookDiagram.through_index_of_id]
 
 def PlanarRookMonoid.mul_exponent_assoc {n m k l : ℕ}
   (d₁ : PlanarRookDiagram n m)
   (d₂ : PlanarRookDiagram m k)
   (d₃ : PlanarRookDiagram k l) :
   PlanarRookMonoid.mul_exponent d₁ d₂ +
-  PlanarRookMonoid.mul_exponent (d₁.mul₂ d₂) d₃ =
-  PlanarRookMonoid.mul_exponent d₁ (d₂.mul₂ d₃) +
+  PlanarRookMonoid.mul_exponent (d₁ * d₂) d₃ =
+  PlanarRookMonoid.mul_exponent d₁ (d₂ * d₃) +
   PlanarRookMonoid.mul_exponent d₂ d₃ := by
     unfold PlanarRookMonoid.mul_exponent
     simp [PlanarRookDiagram.mul_assoc₃]
@@ -644,3 +661,29 @@ def PlanarRookDiagram.ι_lr_bijection {n m : ℕ}
   (d : PlanarRookDiagram n m) :
   d.ι.lr_bijection = d.lr_bijection.symm := by
     exact Subsingleton.elim _ _
+
+def PlanarRookDiagram.ι_mul {n m : ℕ}
+  (d₁ : PlanarRookDiagram n m)
+  (d₂ : PlanarRookDiagram m n) :
+  (d₁ * d₂).ι = d₂.ι * d₁.ι := by
+    apply PlanarRookDiagram.ext
+    · simp only [hmul_eq_mul₂]
+      unfold PlanarRookDiagram.mul₂
+      simp only [ι]
+      ext x
+      constructor
+      · intro h
+        simp only [Finset.mem_filter, Finset.mem_univ, true_and] at h
+        rcases h with ⟨ha, hb⟩
+        simp only [Finset.mem_filter, Finset.mem_univ, true_and]
+        use ha
+        rw [←PlanarRookDiagram.ι_lr_bijection] at hb
+        exact hb
+      · intro h
+        simp only [Finset.mem_filter, Finset.mem_univ, true_and] at h
+        rcases h with ⟨ha, hb⟩
+        simp only [Finset.mem_filter, Finset.mem_univ, true_and]
+        use ha
+        rw [←PlanarRookDiagram.ι_lr_bijection]
+        exact hb
+    constructor

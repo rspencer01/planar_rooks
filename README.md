@@ -19,7 +19,7 @@ This is an incomplete list of things that need to be done.
  * [x] Counting loose strands
  * [ ] Epi-mono factorisation of elements
  * [ ] Cardinality of epi and mono elements
- * [ ] The involution
+ * [x] The involution
 
 #### Planar Rook Algebra
  * [ ] Definition
