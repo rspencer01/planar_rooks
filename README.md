@@ -1,6 +1,7 @@
 # Planar Rook Algebras
 
 [![Lean Action CI](https://github.com/rspencer01/planar_rooks/actions/workflows/lean_action_ci.yml/badge.svg)](https://github.com/rspencer01/planar_rooks/actions/workflows/lean_action_ci.yml)
+[![Documentation](https://img.shields.io/badge/documentation-github.io-blue)](https://rspencer01.github.io/planar_rooks/docs)
 
 This repository contains a very rough and incredibly verbose attempt to derive a theory of the representation theory of Planar Rook Algebras.
 
