@@ -632,6 +632,13 @@ def PlanarRookMonoid.mul_exponent_eq_zero_of_id {n : ℕ}
     simp only [PlanarRookDiagram.mul₂_id]
     simp [PlanarRookDiagram.through_index_of_id]
 
+def PlanarRookMonoid.mul_exponent_eq_zero_of_id' {n : ℕ}
+  (d : PlanarRookDiagram n n) :
+  PlanarRookMonoid.mul_exponent (PlanarRookDiagram.id n) d = 0 := by
+    simp only [PlanarRookMonoid.mul_exponent]
+    simp only [PlanarRookDiagram.id_mul₂]
+    simp [PlanarRookDiagram.through_index_of_id]
+
 def PlanarRookMonoid.mul_exponent_assoc {n m k l : ℕ}
   (d₁ : PlanarRookDiagram n m)
   (d₂ : PlanarRookDiagram m k)

@@ -8,29 +8,29 @@ variable {k : Type} [Field k] (δ : k)
 -- The paramter δ is "unused" but must be carried around to define multiplication
 set_option linter.unusedVariables false
 
-def PlanarRookAlgebra (n : ℕ) (δ : k) := ((PlanarRookDiagram n n) → k)
+def PlanarRookAlgebra (k : Type) (n : ℕ) (δ : k) := ((PlanarRookDiagram n n) → k)
 
 @[ext]
-def PlanarRookAlgebra.ext {n : ℕ} {δ : k} {x y : PlanarRookAlgebra n δ} :
+def PlanarRookAlgebra.ext {n : ℕ} {δ : k} {x y : PlanarRookAlgebra k n δ} :
     (∀ d : PlanarRookDiagram n n, x d = y d) → x = y := fun h => by simp [funext h]
 
-instance : AddCommMonoid (PlanarRookAlgebra n δ) :=
+instance : AddCommMonoid (PlanarRookAlgebra k n δ) :=
   inferInstanceAs (AddCommMonoid ((PlanarRookDiagram n n) → k))
 
 @[simp]
 theorem PlanarRookAlgebra.zero_coeff (d : PlanarRookDiagram n n) :
-    (0 : PlanarRookAlgebra n δ) d = 0 :=
+    (0 : PlanarRookAlgebra k n δ) d = 0 :=
   rfl
 
 @[simp]
-theorem PlanarRookAlgebra.add_coeff (x₁ x₂ : PlanarRookAlgebra n δ) (d : PlanarRookDiagram n n) :
+theorem PlanarRookAlgebra.add_coeff (x₁ x₂ : PlanarRookAlgebra k n δ) (d : PlanarRookDiagram n n) :
     (x₁ + x₂) d = (x₁ d) + (x₂ d) :=
   rfl
 
-instance : Module k (PlanarRookAlgebra n δ) :=
+instance : Module k (PlanarRookAlgebra k n δ) :=
   Pi.module _ _ k
 
-def PlanarRookAlgebra.single : (PlanarRookDiagram n n) → k → PlanarRookAlgebra n δ :=
+def PlanarRookAlgebra.single : (PlanarRookDiagram n n) → k → PlanarRookAlgebra k n δ :=
   Function.update 0
 
 def PlanarRookAlgebra.single_apply (d₁ d₂ : PlanarRookDiagram n n) (c : k) :
@@ -44,7 +44,7 @@ def PlanarRookAlgebra.smul_single (d₁ : PlanarRookDiagram n n) (c₁ c₂ : k)
     rw [←Function.update_smul]
     simp
 
-theorem PlanarRookAlgebra.sum_single (x : PlanarRookAlgebra n δ) :
+theorem PlanarRookAlgebra.sum_single (x : PlanarRookAlgebra k n δ) :
   x = ∑ d : (PlanarRookDiagram n n), PlanarRookAlgebra.single δ d (x d) := by
     ext m
     rw [Finset.univ.sum_apply m]
@@ -54,23 +54,30 @@ theorem PlanarRookAlgebra.sum_single (x : PlanarRookAlgebra n δ) :
 
 This paramter is raised to the exponent of the number of dangling strands
 after monoid multiplication. -/
-noncomputable def PlanarRookAlgebra.mul' (x y : PlanarRookAlgebra n δ) : PlanarRookAlgebra n δ :=
+noncomputable def PlanarRookAlgebra.mul' (x y : PlanarRookAlgebra k n δ) : PlanarRookAlgebra k n δ :=
   ∑ d₁ : (PlanarRookDiagram n n),
     ∑ d₂ : (PlanarRookDiagram n n),
       ((x d₁) * (y d₂)) •
         (PlanarRookAlgebra.single δ (d₁ * d₂) (δ ^ PlanarRookMonoid.mul_exponent d₁ d₂))
 
-def PlanarRookAlgebra.one : PlanarRookAlgebra n δ :=
+def PlanarRookAlgebra.one : PlanarRookAlgebra k n δ :=
   PlanarRookAlgebra.single δ (PlanarRookDiagram.id n) 1
 
 def PlanarRookAlgebra.one_apply (d : PlanarRookDiagram n n) :
-  (PlanarRookAlgebra.one δ) d = if d = PlanarRookDiagram.id n then 1 else 0 := by
-    simp [PlanarRookAlgebra.one, PlanarRookAlgebra.single_apply]
+  (PlanarRookAlgebra.one δ) d = if PlanarRookDiagram.id n = d then 1 else 0 := by
+    simp only [one, single_apply]
+    by_cases h : PlanarRookDiagram.id n = d
+    · simp [h]
+    · rw [eq_comm] at h
+      simp only [h, ↓reduceIte, right_eq_ite_iff, zero_ne_one, imp_false]
+      rw [eq_comm] at h
+      exact h
 
-noncomputable instance : Mul (PlanarRookAlgebra n δ) :=
+
+noncomputable instance : Mul (PlanarRookAlgebra k n δ) :=
   ⟨PlanarRookAlgebra.mul' δ⟩
 
-theorem PlanarRookAlgebra.mul_def (x y : PlanarRookAlgebra n δ) :
+theorem PlanarRookAlgebra.mul_def (x y : PlanarRookAlgebra k n δ) :
     x * y =
       ∑ d₁ : (PlanarRookDiagram n n),
         ∑ d₂ : (PlanarRookDiagram n n),
@@ -78,7 +85,7 @@ theorem PlanarRookAlgebra.mul_def (x y : PlanarRookAlgebra n δ) :
             (PlanarRookAlgebra.single δ (d₁ * d₂) (δ ^ PlanarRookMonoid.mul_exponent d₁ d₂)) :=
   rfl
 
-theorem PlanarRookAlgebra.mul_apply (x y : PlanarRookAlgebra n δ) :
+theorem PlanarRookAlgebra.mul_apply (x y : PlanarRookAlgebra k n δ) :
   (x * y) m = ∑ d₁, ∑ d₂,
     if d₁ * d₂ = m then (x d₁) * (y d₂) * (δ ^ PlanarRookMonoid.mul_exponent d₁ d₂) else 0 := by
   rw [PlanarRookAlgebra.mul_def]
@@ -96,8 +103,9 @@ theorem PlanarRookAlgebra.mul_apply (x y : PlanarRookAlgebra n δ) :
   intro x₂ hx₂
   simp[eq_comm]
 
-
-noncomputable instance (δ : k) : NonUnitalSemiring (PlanarRookAlgebra n δ) := {
+-- Disable notation for now
+--set_option pp.notation false
+noncomputable instance (δ : k) : NonUnitalSemiring (PlanarRookAlgebra k n δ) := {
   left_distrib := fun a b c => by
     ext d
     simp only [PlanarRookAlgebra.add_coeff]
@@ -137,18 +145,94 @@ noncomputable instance (δ : k) : NonUnitalSemiring (PlanarRookAlgebra n δ) := 
   mul_assoc := sorry
 }
 
-instance PlanarRookAlgebra.hasOne : One (PlanarRookAlgebra n δ) :=
+instance PlanarRookAlgebra.hasOne : One (PlanarRookAlgebra k n δ) :=
   ⟨PlanarRookAlgebra.one δ⟩
 
-theorem PlanarRookAlgebra.one_def : (1 : PlanarRookAlgebra n δ) = PlanarRookAlgebra.one δ :=
+theorem PlanarRookAlgebra.one_def : (1 : PlanarRookAlgebra k n δ) = PlanarRookAlgebra.one δ :=
   rfl
 
-noncomputable instance (δ : k) : Semiring (PlanarRookAlgebra n δ) := {
-  one_mul := fun a => sorry
-  mul_one := sorry
+-- Possible kernel error here: https://github.com/leanprover/lean4/issues/1155
+noncomputable instance (k : Type) [Field k] (n : ℕ) (δ : k) : Semiring (PlanarRookAlgebra (k:=k) n δ) := {
+  one_mul := fun a => by
+    ext d
+    rw [PlanarRookAlgebra.one_def]
+    rw [PlanarRookAlgebra.mul_apply]
+    simp only [PlanarRookDiagram.hmul_eq_mul₂, PlanarRookAlgebra.one_apply, ite_mul, one_mul,
+      zero_mul]
+    conv => {
+      lhs
+      arg 2
+      ext x
+      arg 2
+      ext y
+      rw [←ite_and]
+      arg 1
+      rw [and_comm]
+    }
+    conv => {
+      lhs
+      arg 2
+      ext x
+      arg 2
+      ext y
+      rw [ite_and]
+    }
+    simp only [Finset.sum_ite_irrel, Finset.sum_const_zero, Finset.sum_ite_eq, Finset.mem_univ,
+      ↓reduceIte]
+    conv => {
+      arg 1
+      arg 2
+      ext x
+      arg 1
+      rw [←PlanarRookDiagram.hmul_eq_mul₂,PlanarRookDiagram.id_mul₂]
+    }
+    conv => {
+      lhs
+      rw [Finset.univ.sum_ite_eq']
+    }
+    rw [PlanarRookMonoid.mul_exponent_eq_zero_of_id']
+    simp
+  mul_one := fun a => by
+    ext d
+    rw [PlanarRookAlgebra.one_def]
+    rw [PlanarRookAlgebra.mul_apply]
+    simp [PlanarRookAlgebra.one_apply]
+    conv => {
+      lhs
+      arg 2
+      ext x
+      arg 2
+      ext y
+      rw [←ite_and]
+      arg 1
+      rw [and_comm]
+    }
+    conv => {
+      lhs
+      arg 2
+      ext x
+      arg 2
+      ext y
+      rw [ite_and]
+    }
+    conv => {
+      lhs
+      arg 2
+      ext x
+      rw [Finset.univ.sum_ite_eq]
+    }
+    conv => {
+      lhs
+      arg 2
+      ext x
+      simp
+      arg 1
+      rw [←PlanarRookDiagram.hmul_eq_mul₂,PlanarRookDiagram.mul₂_id]
+    }
+    simp [PlanarRookMonoid.mul_exponent_eq_zero_of_id]
 }
 
-noncomputable instance (δ : k) : Algebra k (PlanarRookAlgebra n δ) := {
+noncomputable instance (δ : k) : Algebra k (PlanarRookAlgebra k n δ) := {
   algebraMap := sorry
   commutes' := sorry
   smul_def' := sorry
