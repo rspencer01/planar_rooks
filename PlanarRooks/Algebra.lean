@@ -37,7 +37,7 @@ def PlanarRookAlgebra.single_apply (d₁ d₂ : PlanarRookDiagram n n) (c : k) :
   (PlanarRookAlgebra.single δ d₁ c) d₂ = if d₂ = d₁ then c else 0 := by
     simp [PlanarRookAlgebra.single, Function.update]
 
-def PlanarRookAlgebra.smul_single (d₁ : PlanarRookDiagram n n) (c₁ c₂ : k) :
+theorem PlanarRookAlgebra.smul_single (d₁ : PlanarRookDiagram n n) (c₁ c₂ : k) :
   c₁ • (PlanarRookAlgebra.single δ d₁ c₂) = PlanarRookAlgebra.single δ d₁ (c₁ * c₂) := by
     ext x
     unfold PlanarRookAlgebra.single
@@ -150,15 +150,46 @@ theorem PlanarRookAlgebra.mul_single (x : PlanarRookAlgebra k n δ)
     x * (PlanarRookAlgebra.single δ d₁ c) =
       ∑ d₂ : (PlanarRookDiagram n n),
         (x d₂) •
-          (PlanarRookAlgebra.single δ (d₂ * d₁) (c * (δ ^ PlanarRookMonoid.mul_exponent d₂ d₁))) := by
-  sorry
+          (PlanarRookAlgebra.single δ (d₂ * d₁)
+            (c * (δ ^ PlanarRookMonoid.mul_exponent d₂ d₁))) := by
+  rw [PlanarRookAlgebra.mul_def]
+  conv => {
+    lhs
+    arg 2
+    ext d₁
+    arg 2
+    ext d₁
+    arg 1
+    rw [PlanarRookAlgebra.single_apply]
+    simp
+  }
+  conv => {
+    lhs
+    arg 2
+    ext d₁
+    simp [Finset.univ.sum_ite_eq']
+  }
+  apply Finset.sum_congr rfl
+  intro x₁ hx₁
+  simp[PlanarRookAlgebra.smul_single δ]
+  ring_nf
 
 theorem PlanarRookAlgebra.mul_single_single (d₁ d₂ : PlanarRookDiagram n n) (c₁ c₂ : k) :
     (PlanarRookAlgebra.single δ d₁ c₁) *
       (PlanarRookAlgebra.single δ d₂ c₂) =
         PlanarRookAlgebra.single δ (d₁ * d₂)
           (c₁ * c₂ * (δ ^ PlanarRookMonoid.mul_exponent d₁ d₂)) := by
-  sorry
+  rw [PlanarRookAlgebra.mul_single δ]
+  conv => {
+    lhs
+    arg 2
+    ext d₁
+    rw [PlanarRookAlgebra.single_apply]
+    simp
+  }
+  rw [Finset.univ.sum_ite_eq']
+  simp [PlanarRookAlgebra.smul_single δ]
+  ring_nf
 
 noncomputable instance PlanarRookAlgebra.nonUnitalSemiring :
     NonUnitalSemiring (PlanarRookAlgebra k n δ) := {
