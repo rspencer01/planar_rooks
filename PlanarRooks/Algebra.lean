@@ -105,8 +105,8 @@ theorem PlanarRookAlgebra.mul_apply (x y : PlanarRookAlgebra k n δ) :
 
 -- Disable notation for now
 --set_option pp.notation false
-noncomputable instance PlanarRookAlgebra.nonUnitalSemiring :
-    NonUnitalSemiring (PlanarRookAlgebra k n δ) := {
+noncomputable instance PlanarRookAlgebra.nonUnitalNonAssocSemiring :
+    NonUnitalNonAssocSemiring (PlanarRookAlgebra k n δ) := {
   left_distrib := fun a b c => by
     ext d
     simp only [PlanarRookAlgebra.add_coeff]
@@ -143,7 +143,62 @@ noncomputable instance PlanarRookAlgebra.nonUnitalSemiring :
       simp
   zero_mul := by simp [PlanarRookAlgebra.mul_def]
   mul_zero := by simp [PlanarRookAlgebra.mul_def]
-  mul_assoc := sorry
+}
+
+theorem PlanarRookAlgebra.mul_single (x : PlanarRookAlgebra k n δ)
+    (d₁ : PlanarRookDiagram n n) (c : k) :
+    x * (PlanarRookAlgebra.single δ d₁ c) =
+      ∑ d₂ : (PlanarRookDiagram n n),
+        (x d₂) •
+          (PlanarRookAlgebra.single δ (d₂ * d₁) (c * (δ ^ PlanarRookMonoid.mul_exponent d₂ d₁))) := by
+  sorry
+
+theorem PlanarRookAlgebra.mul_single_single (d₁ d₂ : PlanarRookDiagram n n) (c₁ c₂ : k) :
+    (PlanarRookAlgebra.single δ d₁ c₁) *
+      (PlanarRookAlgebra.single δ d₂ c₂) =
+        PlanarRookAlgebra.single δ (d₁ * d₂)
+          (c₁ * c₂ * (δ ^ PlanarRookMonoid.mul_exponent d₁ d₂)) := by
+  sorry
+
+noncomputable instance PlanarRookAlgebra.nonUnitalSemiring :
+    NonUnitalSemiring (PlanarRookAlgebra k n δ) := {
+  mul_assoc := by
+    intro a b c
+    rw [PlanarRookAlgebra.sum_single _ a]
+    rw [Finset.sum_mul (a:=b)]
+    rw [Finset.sum_mul (a:=c)]
+    rw [Finset.sum_mul (a:=b * c)]
+    apply Finset.sum_congr rfl
+    intro d₁ hd₁
+    rw [PlanarRookAlgebra.sum_single _ b]
+    rw [Finset.sum_mul]
+    rw [Finset.mul_sum]
+    rw [Finset.sum_mul (a:=c)]
+    rw [Finset.mul_sum]
+    apply Finset.sum_congr rfl
+    intro d₂ hd₂
+    rw [PlanarRookAlgebra.sum_single _ c]
+    rw [Finset.mul_sum]
+    rw [Finset.mul_sum]
+    rw [Finset.mul_sum]
+    apply Finset.sum_congr rfl
+    intro d₃ hd₃
+    rw [PlanarRookAlgebra.mul_single_single]
+    rw [PlanarRookAlgebra.mul_single_single]
+    rw [PlanarRookAlgebra.mul_single_single]
+    rw [PlanarRookAlgebra.mul_single_single]
+    rw [←PlanarRookMonoid.mul_assoc]
+    ring_nf
+    conv => {
+      rhs
+      arg 3
+      rw [mul_assoc]
+      arg 2
+      -- Need mul exponent to be a natural here
+      -- rw [← zpow_add (a := δ) (m:= PlanarRookMonoid.mul_exponent d₂ d₃)]
+    }
+    sorry
+
 }
 
 instance PlanarRookAlgebra.hasOne : One (PlanarRookAlgebra k n δ) :=
