@@ -157,7 +157,7 @@ noncomputable instance (k : Type) [Field k] (n : ℕ) (δ : k) : Semiring (Plana
     ext d
     rw [PlanarRookAlgebra.one_def]
     rw [PlanarRookAlgebra.mul_apply]
-    simp only [PlanarRookDiagram.hmul_eq_mul₂, PlanarRookAlgebra.one_apply, ite_mul, one_mul,
+    simp only [PlanarRookDiagram.hmul_eq_mul, PlanarRookAlgebra.one_apply, ite_mul, one_mul,
       zero_mul]
     conv => {
       lhs
@@ -184,7 +184,7 @@ noncomputable instance (k : Type) [Field k] (n : ℕ) (δ : k) : Semiring (Plana
       arg 2
       ext x
       arg 1
-      rw [←PlanarRookDiagram.hmul_eq_mul₂,PlanarRookDiagram.id_mul₂]
+      rw [←PlanarRookDiagram.hmul_eq_mul,PlanarRookDiagram.id_mul]
     }
     conv => {
       lhs
@@ -227,7 +227,7 @@ noncomputable instance (k : Type) [Field k] (n : ℕ) (δ : k) : Semiring (Plana
       ext x
       simp
       arg 1
-      rw [←PlanarRookDiagram.hmul_eq_mul₂,PlanarRookDiagram.mul₂_id]
+      rw [←PlanarRookDiagram.hmul_eq_mul,PlanarRookDiagram.mul_id]
     }
     simp [PlanarRookMonoid.mul_exponent_eq_zero_of_id]
 }
