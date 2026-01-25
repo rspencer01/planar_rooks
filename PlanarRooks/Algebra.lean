@@ -27,25 +27,26 @@ theorem PlanarRookAlgebra.add_coeff (x₁ x₂ : PlanarRookAlgebra k n δ) (d : 
     (x₁ + x₂) d = (x₁ d) + (x₂ d) :=
   rfl
 
-instance : Module k (PlanarRookAlgebra k n δ) :=
+instance (k : Type) [Field k] (n : ℕ) (δ : k) : Module k (PlanarRookAlgebra k n δ) :=
   Pi.module _ _ k
 
-def PlanarRookAlgebra.single : (PlanarRookDiagram n n) → k → PlanarRookAlgebra k n δ :=
+def PlanarRookAlgebra.single (k : Type) [Field k] (n : ℕ) (δ : k) :
+  (PlanarRookDiagram n n) → k → PlanarRookAlgebra k n δ :=
   Function.update 0
 
 def PlanarRookAlgebra.single_apply (d₁ d₂ : PlanarRookDiagram n n) (c : k) :
-  (PlanarRookAlgebra.single δ d₁ c) d₂ = if d₂ = d₁ then c else 0 := by
+  (PlanarRookAlgebra.single k n δ d₁ c) d₂ = if d₂ = d₁ then c else 0 := by
     simp [PlanarRookAlgebra.single, Function.update]
 
 def PlanarRookAlgebra.smul_single (d₁ : PlanarRookDiagram n n) (c₁ c₂ : k) :
-  c₁ • (PlanarRookAlgebra.single δ d₁ c₂) = PlanarRookAlgebra.single δ d₁ (c₁ * c₂) := by
+  c₁ • (PlanarRookAlgebra.single k n δ d₁ c₂) = PlanarRookAlgebra.single k n δ d₁ (c₁ * c₂) := by
     ext x
     unfold PlanarRookAlgebra.single
     rw [←Function.update_smul]
     simp
 
 theorem PlanarRookAlgebra.sum_single (x : PlanarRookAlgebra k n δ) :
-  x = ∑ d : (PlanarRookDiagram n n), PlanarRookAlgebra.single δ d (x d) := by
+  x = ∑ d : (PlanarRookDiagram n n), PlanarRookAlgebra.single k n δ d (x d) := by
     ext m
     rw [Finset.univ.sum_apply m]
     simp [PlanarRookAlgebra.single_apply]
@@ -58,10 +59,10 @@ noncomputable def PlanarRookAlgebra.mul' (x y : PlanarRookAlgebra k n δ) : Plan
   ∑ d₁ : (PlanarRookDiagram n n),
     ∑ d₂ : (PlanarRookDiagram n n),
       ((x d₁) * (y d₂)) •
-        (PlanarRookAlgebra.single δ (d₁ * d₂) (δ ^ PlanarRookMonoid.mul_exponent d₁ d₂))
+        (PlanarRookAlgebra.single k n δ (d₁ * d₂) (δ ^ PlanarRookMonoid.mul_exponent d₁ d₂))
 
 def PlanarRookAlgebra.one : PlanarRookAlgebra k n δ :=
-  PlanarRookAlgebra.single δ (PlanarRookDiagram.id n) 1
+  PlanarRookAlgebra.single k n δ (PlanarRookDiagram.id n) 1
 
 def PlanarRookAlgebra.one_apply (d : PlanarRookDiagram n n) :
   (PlanarRookAlgebra.one δ) d = if PlanarRookDiagram.id n = d then 1 else 0 := by
@@ -82,7 +83,7 @@ theorem PlanarRookAlgebra.mul_def (x y : PlanarRookAlgebra k n δ) :
       ∑ d₁ : (PlanarRookDiagram n n),
         ∑ d₂ : (PlanarRookDiagram n n),
           ((x d₁) * (y d₂)) •
-            (PlanarRookAlgebra.single δ (d₁ * d₂) (δ ^ PlanarRookMonoid.mul_exponent d₁ d₂)) :=
+            (PlanarRookAlgebra.single k n δ (d₁ * d₂) (δ ^ PlanarRookMonoid.mul_exponent d₁ d₂)) :=
   rfl
 
 theorem PlanarRookAlgebra.mul_apply (x y : PlanarRookAlgebra k n δ) :
@@ -105,7 +106,8 @@ theorem PlanarRookAlgebra.mul_apply (x y : PlanarRookAlgebra k n δ) :
 
 -- Disable notation for now
 --set_option pp.notation false
-noncomputable instance (δ : k) : NonUnitalSemiring (PlanarRookAlgebra k n δ) := {
+noncomputable instance PlanarRookAlgebra.nonUnitalSemiring (k : Type) [Field k] (n : ℕ) (δ : k) :
+    NonUnitalSemiring (PlanarRookAlgebra k n δ) := {
   left_distrib := fun a b c => by
     ext d
     simp only [PlanarRookAlgebra.add_coeff]
@@ -151,8 +153,8 @@ instance PlanarRookAlgebra.hasOne : One (PlanarRookAlgebra k n δ) :=
 theorem PlanarRookAlgebra.one_def : (1 : PlanarRookAlgebra k n δ) = PlanarRookAlgebra.one δ :=
   rfl
 
--- Possible kernel error here: https://github.com/leanprover/lean4/issues/1155
-noncomputable instance (k : Type) [Field k] (n : ℕ) (δ : k) : Semiring (PlanarRookAlgebra (k:=k) n δ) := {
+noncomputable instance PlanarRookAlgebra.is_semiring (k : Type) [Field k] (n : ℕ) (δ : k) :
+    Semiring (PlanarRookAlgebra (k:=k) n δ) := {
   one_mul := fun a => by
     ext d
     rw [PlanarRookAlgebra.one_def]
@@ -192,11 +194,14 @@ noncomputable instance (k : Type) [Field k] (n : ℕ) (δ : k) : Semiring (Plana
     }
     rw [PlanarRookMonoid.mul_exponent_eq_zero_of_id']
     simp
-  mul_one := fun a => by
+  mul_one := by
+    classical
+    intro a
     ext d
     rw [PlanarRookAlgebra.one_def]
     rw [PlanarRookAlgebra.mul_apply]
-    simp [PlanarRookAlgebra.one_apply]
+    simp only [PlanarRookDiagram.hmul_eq_mul, one_apply, mul_ite, mul_one, mul_zero, ite_mul,
+      zero_mul]
     conv => {
       lhs
       arg 2
@@ -204,8 +209,7 @@ noncomputable instance (k : Type) [Field k] (n : ℕ) (δ : k) : Semiring (Plana
       arg 2
       ext y
       rw [←ite_and]
-      arg 1
-      rw [and_comm]
+      simp [and_comm (a := x.mul y = d) (b :=PlanarRookDiagram.id n = y)]
     }
     conv => {
       lhs
@@ -225,11 +229,9 @@ noncomputable instance (k : Type) [Field k] (n : ℕ) (δ : k) : Semiring (Plana
       lhs
       arg 2
       ext x
-      simp
-      arg 1
-      rw [←PlanarRookDiagram.hmul_eq_mul,PlanarRookDiagram.mul_id]
+      simp [←PlanarRookDiagram.hmul_eq_mul,PlanarRookDiagram.mul_id]
     }
-    simp [PlanarRookMonoid.mul_exponent_eq_zero_of_id]
+    simp [@PlanarRookMonoid.mul_exponent_eq_zero_of_id n]
 }
 
 noncomputable instance (δ : k) : Algebra k (PlanarRookAlgebra k n δ) := {
