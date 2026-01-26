@@ -617,25 +617,120 @@ instance PlanarRookMonoid : Monoid (PlanarRookDiagram n n) := {
 -- When multiplying two diagrams, we are left with a number of disconnected
 -- components. The number of these is the exponent in the planar rook algebra's
 -- multiplication.
-def PlanarRookMonoid.mul_exponent {n m k : ℕ}
+def PlanarRookMonoid.mul_exponent' {n m k : ℕ}
   (d₁ : PlanarRookDiagram n m)
   (d₂ : PlanarRookDiagram m k) :
   ℤ :=
     m - d₁.through_index - d₂.through_index + (d₁ * d₂).through_index
 
+theorem PlanarRookMonoid.mul_exponent_is_stubs' {n m k : ℕ}
+  (d₁ : PlanarRookDiagram n m)
+  (d₂ : PlanarRookDiagram m k) :
+  PlanarRookMonoid.mul_exponent' d₁ d₂ =
+    Finset.card {x | x ∈ (d₁.right_defects ∪ d₂.left_defects)ᶜ} := by
+      classical
+      have h : (d₁ * d₂).through_index = (d₁.right_defects ∩ d₂.left_defects).card := by
+        unfold PlanarRookDiagram.through_index
+        rw [PlanarRookDiagram.hmul_eq_mul]
+        unfold PlanarRookDiagram.mul
+        simp only
+        apply Finset.card_bij' (α := Fin n) (β := Fin m) (i := fun a ha => d₁.lr_bijection ⟨a, by
+            simp only [Finset.mem_filter, Finset.mem_univ, true_and] at ha
+            rcases ha with ⟨haa, hab⟩
+            exact haa
+            ⟩) (j := fun b hb => d₁.lr_bijection.symm ⟨b, by
+            simp only [Finset.mem_inter] at hb
+            rcases hb with ⟨hba, hbb⟩
+            exact hba
+            ⟩)
+        · intro a ha
+          simp
+        · intro a ha
+          simp
+        · intro a ha
+          simp only [Finset.mem_inter, SetLike.coe_mem, true_and]
+          simp only [Finset.mem_filter, Finset.mem_univ, true_and] at ha
+          rcases ha with ⟨haa, hab⟩
+          exact hab
+        · intro a ha
+          simp
+          simp [Finset.mem_inter.mp ha]
+      unfold PlanarRookMonoid.mul_exponent'
+      rw [h]
+      rw [PlanarRookDiagram.through_index_eq_right]
+      rw [PlanarRookDiagram.through_index]
+      have h₂ : Finset.card {x | x ∈ (d₁.right_defects ∪ d₂.left_defects)ᶜ} =
+         (d₁.right_defects ∪ d₂.left_defects)ᶜ.card := by
+        apply Finset.card_bij' (α := Fin m) (β := Fin m)
+          (i := fun a ha => a)
+          (j := fun b hb => b)
+        · intro a ha
+          simp at ha
+          simp [ha]
+        · intro b hb
+          simp at hb
+          simp [hb]
+        · intro a ha
+          rfl
+        · intro b hb
+          rfl
+      rw [h₂]
+      rw [Finset.card_compl]
+      conv => {
+        rhs
+        rw [Nat.cast_sub (by
+          apply Finset.card_le_univ
+        )]
+      }
+      rw [Finset.card_union]
+      conv => {
+        rhs
+        rw [Nat.cast_sub (by
+          rw [Finset.card_inter]
+          simp
+        )]
+      }
+      simp
+      ring
+
+def PlanarRookMonoid.mul_exponent {n m k : ℕ}
+  (d₁ : PlanarRookDiagram n m)
+  (d₂ : PlanarRookDiagram m k) :
+  ℕ :=
+    Int.toNat (PlanarRookMonoid.mul_exponent' d₁ d₂)
+
 def PlanarRookMonoid.mul_exponent_eq_zero_of_id {n : ℕ}
   (d : PlanarRookDiagram n n) :
   PlanarRookMonoid.mul_exponent d (PlanarRookDiagram.id n) = 0 := by
-    simp only [PlanarRookMonoid.mul_exponent]
+    simp only [PlanarRookMonoid.mul_exponent, PlanarRookMonoid.mul_exponent']
     simp only [PlanarRookDiagram.mul_id]
     simp [PlanarRookDiagram.through_index_of_id]
 
 def PlanarRookMonoid.mul_exponent_eq_zero_of_id' {n : ℕ}
   (d : PlanarRookDiagram n n) :
   PlanarRookMonoid.mul_exponent (PlanarRookDiagram.id n) d = 0 := by
-    simp only [PlanarRookMonoid.mul_exponent]
+    simp only [PlanarRookMonoid.mul_exponent, PlanarRookMonoid.mul_exponent']
     simp only [PlanarRookDiagram.id_mul]
     simp [PlanarRookDiagram.through_index_of_id]
+
+def PlanarRookMonoid.mul_exponent_assoc' {n m k l : ℕ}
+  (d₁ : PlanarRookDiagram n m)
+  (d₂ : PlanarRookDiagram m k)
+  (d₃ : PlanarRookDiagram k l) :
+  PlanarRookMonoid.mul_exponent' d₁ d₂ +
+  PlanarRookMonoid.mul_exponent' (d₁ * d₂) d₃ =
+  PlanarRookMonoid.mul_exponent' d₁ (d₂ * d₃) +
+  PlanarRookMonoid.mul_exponent' d₂ d₃ := by
+    unfold PlanarRookMonoid.mul_exponent'
+    simp [PlanarRookDiagram.mul_assoc]
+    ring
+
+def PlanarRookMonoid.mul_exponent_ge_zero {n m k : ℕ}
+  (d₁ : PlanarRookDiagram n m)
+  (d₂ : PlanarRookDiagram m k) :
+  0 ≤ PlanarRookMonoid.mul_exponent' d₁ d₂ := by
+    rw [PlanarRookMonoid.mul_exponent_is_stubs' d₁ d₂]
+    simp
 
 def PlanarRookMonoid.mul_exponent_assoc {n m k l : ℕ}
   (d₁ : PlanarRookDiagram n m)
@@ -646,8 +741,11 @@ def PlanarRookMonoid.mul_exponent_assoc {n m k l : ℕ}
   PlanarRookMonoid.mul_exponent d₁ (d₂ * d₃) +
   PlanarRookMonoid.mul_exponent d₂ d₃ := by
     unfold PlanarRookMonoid.mul_exponent
-    simp [PlanarRookDiagram.mul_assoc]
-    ring
+    rw [←Int.toNat_add (PlanarRookMonoid.mul_exponent_ge_zero _ _)
+                       (PlanarRookMonoid.mul_exponent_ge_zero _ _)]
+    rw [←Int.toNat_add (PlanarRookMonoid.mul_exponent_ge_zero _ _)
+                       (PlanarRookMonoid.mul_exponent_ge_zero _ _)]
+    rw [PlanarRookMonoid.mul_exponent_assoc']
 
 def PlanarRookDiagram.ι : PlanarRookDiagram n m → PlanarRookDiagram m n := fun d =>{
   left_defects := d.right_defects,

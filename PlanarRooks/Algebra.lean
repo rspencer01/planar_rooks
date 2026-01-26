@@ -54,7 +54,8 @@ theorem PlanarRookAlgebra.sum_single (x : PlanarRookAlgebra k n δ) :
 
 This paramter is raised to the exponent of the number of dangling strands
 after monoid multiplication. -/
-noncomputable def PlanarRookAlgebra.mul' (x y : PlanarRookAlgebra k n δ) : PlanarRookAlgebra k n δ :=
+noncomputable def PlanarRookAlgebra.mul' (x y : PlanarRookAlgebra k n δ) :
+    PlanarRookAlgebra k n δ :=
   ∑ d₁ : (PlanarRookDiagram n n),
     ∑ d₂ : (PlanarRookDiagram n n),
       ((x d₁) * (y d₂)) •
@@ -223,13 +224,24 @@ noncomputable instance PlanarRookAlgebra.nonUnitalSemiring :
     conv => {
       rhs
       arg 3
+      arg 1
       rw [mul_assoc]
       arg 2
-      -- Need mul exponent to be a natural here
-      -- rw [← zpow_add (a := δ) (m:= PlanarRookMonoid.mul_exponent d₂ d₃)]
+      rw [← pow_add (a := δ) (m:= PlanarRookMonoid.mul_exponent d₂ d₃)]
+      arg 2
+      rw [add_comm]
+      rw [←PlanarRookMonoid.mul_exponent_assoc d₁ d₂ d₃]
     }
-    sorry
-
+    conv => {
+      lhs
+      arg 3
+      ring_nf
+    }
+    conv => {
+      rhs
+      arg 3
+      ring_nf
+    }
 }
 
 instance PlanarRookAlgebra.hasOne : One (PlanarRookAlgebra k n δ) :=
@@ -319,8 +331,19 @@ noncomputable instance PlanarRookAlgebra.is_semiring :
     simp [@PlanarRookMonoid.mul_exponent_eq_zero_of_id n]
 }
 
+
+def PlanarRookAlgebra.single_one_ring_hom : k →+* PlanarRookAlgebra k n δ :=
+  {
+    toFun := fun c => c • (1 : PlanarRookAlgebra k n δ)
+    map_one' := one_smul _ _
+    map_mul' := fun x y => by
+      sorry
+    map_zero' := sorry
+    map_add' := sorry
+  }
+
 noncomputable instance (δ : k) : Algebra k (PlanarRookAlgebra k n δ) := {
-  algebraMap := sorry
+  algebraMap := PlanarRookAlgebra.single_one_ring_hom δ,
   commutes' := sorry
   smul_def' := sorry
 }
