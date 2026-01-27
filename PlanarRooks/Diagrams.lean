@@ -614,6 +614,10 @@ instance PlanarRookMonoid : Monoid (PlanarRookDiagram n n) := {
   mul_assoc := PlanarRookDiagram.mul_assoc
 }
 
+theorem PlanarRookMonoid.one_def {n : ℕ} :
+  (1 : PlanarRookDiagram n n) = PlanarRookDiagram.id n := by
+    rfl
+
 -- When multiplying two diagrams, we are left with a number of disconnected
 -- components. The number of these is the exponent in the planar rook algebra's
 -- multiplication.
