@@ -189,9 +189,31 @@ theorem PlanarRookAlgebra.single_mul (x : PlanarRookAlgebra k n δ)
     (PlanarRookAlgebra.single δ d₁ c) * x =
       ∑ d₂ : (PlanarRookDiagram n n),
         (x d₂) •
-          (PlanarRookAlgebra.single δ (d₂ * d₁)
-            (c * (δ ^ PlanarRookMonoid.mul_exponent d₂ d₁))) := by
-  sorry
+          (PlanarRookAlgebra.single δ (d₁ * d₂)
+            (c * (δ ^ PlanarRookMonoid.mul_exponent d₁ d₂))) := by
+  rw [PlanarRookAlgebra.mul_def]
+  conv => {
+    lhs
+    arg 2
+    ext d₁
+    arg 2
+    ext d₂
+    arg 1
+    rw [PlanarRookAlgebra.single_apply]
+    simp
+  }
+  conv => {
+    lhs
+    arg 2
+    ext d₁
+    simp [Finset.univ.sum_ite_eq']
+  }
+  simp only [Finset.univ.sum_ite_eq', Finset.mem_univ, ↓reduceIte, PlanarRookDiagram.hmul_eq_mul]
+  apply Finset.sum_congr rfl
+  intro x₁ hx₁
+  simp[PlanarRookAlgebra.smul_single δ]
+  ring_nf
+
 
 theorem PlanarRookAlgebra.mul_single_single (d₁ d₂ : PlanarRookDiagram n n) (c₁ c₂ : k) :
     (PlanarRookAlgebra.single δ d₁ c₁) *
@@ -378,7 +400,30 @@ def PlanarRookAlgebra.single_one_ring_hom : k →+* PlanarRookAlgebra k n δ :=
 
 noncomputable instance (δ : k) : Algebra k (PlanarRookAlgebra k n δ) := {
   algebraMap := PlanarRookAlgebra.single_one_ring_hom δ,
-  commutes' := sorry
+  commutes' := fun r x => by
+    unfold PlanarRookAlgebra.single_one_ring_hom
+    simp only [RingHom.coe_mk, MonoidHom.coe_mk, OneHom.coe_mk]
+    rw [PlanarRookAlgebra.one_is]
+    rw [PlanarRookAlgebra.smul_single]
+    simp only [mul_one]
+    rw [PlanarRookAlgebra.single_mul]
+    rw [PlanarRookAlgebra.mul_single]
+    conv => {
+      lhs
+      arg 2
+      ext d₂
+      rw [PlanarRookMonoid.mul_exponent_eq_zero_of_id']
+      simp
+      rw [←PlanarRookDiagram.hmul_eq_mul, PlanarRookDiagram.id_mul]
+    }
+    conv => {
+      rhs
+      arg 2
+      ext d₁
+      rw [PlanarRookMonoid.mul_exponent_eq_zero_of_id]
+      simp
+      rw [←PlanarRookDiagram.hmul_eq_mul, PlanarRookDiagram.mul_id]
+    }
   smul_def' := fun r x => by
     unfold PlanarRookAlgebra.single_one_ring_hom
     simp only [RingHom.coe_mk, MonoidHom.coe_mk, OneHom.coe_mk]
@@ -390,9 +435,9 @@ noncomputable instance (δ : k) : Algebra k (PlanarRookAlgebra k n δ) := {
       arg 2
       ext d₁
       arg 2
-      rw [PlanarRookMonoid.mul_exponent_eq_zero_of_id]
+      rw [PlanarRookMonoid.mul_exponent_eq_zero_of_id']
       rw [←PlanarRookMonoid.one_def]
-      rw [PlanarRookMonoid.mul_one d₁]
+      rw [PlanarRookMonoid.one_mul d₁]
       simp
     }
     rw [PlanarRookAlgebra.sum_single δ (r • x)]

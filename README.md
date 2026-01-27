@@ -22,7 +22,8 @@ This is an incomplete list of things that need to be done.
  * [x] The involution
 
 #### Planar Rook Algebra
- * [ ] Definition
+ * [x] Definition
+ * [ ] The involution
 
 #### Cellular Algebras
  * [ ] Defintions of cellular algebras
