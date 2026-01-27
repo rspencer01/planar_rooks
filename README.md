@@ -9,6 +9,11 @@ For an introduction see [[FHH08]](https://arxiv.org/pdf/0806.3960). The represen
 
 This project will aim to show the cellularity of the algebras and that their representation theory depends only on whether δ is nonzero.
 
+### Why are the proofs so terrible
+I am not an experienced LEAN user (am just picking it up again after several years' hiatus) and don't care much about making my proofs fast or neat.
+
+Simplification PRs are welcome.
+
 ### Progress
 This is an incomplete list of things that need to be done.
 
