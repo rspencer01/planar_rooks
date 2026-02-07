@@ -107,6 +107,26 @@ theorem through_index_eq_right {n m : ℕ}
   d.through_index = d.right_defects.card := by
     rw [through_index, d.consistant]
 
+theorem through_index_le_left {n m : ℕ}
+  (d : Diagram n m) :
+  d.through_index ≤ n := by
+    rw [through_index]
+    conv => {
+      rhs
+      rw [←Fintype.card_fin n]
+    }
+    exact Finset.card_le_univ (α := Fin n) _
+
+theorem through_index_le_right {n m : ℕ}
+  (d : Diagram n m) :
+  d.through_index ≤ m := by
+    rw [through_index, d.consistant]
+    conv => {
+      rhs
+      rw [←Fintype.card_fin m]
+    }
+    exact Finset.card_le_univ (α := Fin m) _
+
 theorem through_index_of_id {n : ℕ} :
   (id n).through_index = n := by
     simp [through_index, id]

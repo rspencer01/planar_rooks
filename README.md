@@ -22,13 +22,13 @@ This is an incomplete list of things that need to be done.
  * [x] Definition of monoid
  * [ ] Cardinality of monoid
  * [x] Counting loose strands
- * [ ] Epi-mono factorisation of elements
  * [ ] Cardinality of epi and mono elements
  * [x] The involution
 
 #### Planar Rook Algebra
  * [x] Definition
  * [ ] The involution
+ * [x] Independence on the parameter
 
 #### Cellular Algebras
  * [ ] Defintions of cellular algebras

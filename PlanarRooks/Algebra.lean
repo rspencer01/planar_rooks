@@ -398,7 +398,8 @@ def PlanarRookAlgebra.single_one_ring_hom : k →+* PlanarRookAlgebra k n δ :=
       exact PlanarRookAlgebra.add_single δ _ _ _
   }
 
-noncomputable instance (δ : k) : Algebra k (PlanarRookAlgebra k n δ) := {
+noncomputable instance PlanarRookAlgebra.is_algebra (δ : k) :
+    Algebra k (PlanarRookAlgebra k n δ) := {
   algebraMap := PlanarRookAlgebra.single_one_ring_hom δ,
   commutes' := fun r x => by
     unfold PlanarRookAlgebra.single_one_ring_hom
@@ -452,3 +453,189 @@ noncomputable instance (δ : k) : Algebra k (PlanarRookAlgebra k n δ) := {
       simp [mul_comm r (x x₁)]
     · simp [h]
 }
+
+theorem PlanarRookAlgebra.algebra_map :
+  algebraMap k (PlanarRookAlgebra k n δ) = PlanarRookAlgebra.single_one_ring_hom δ :=
+  rfl
+
+noncomputable def PlanarRookAlgebra.parameter_independence (n : ℕ) (δ₁ : k) (δ₁_nonzero : δ₁ ≠ 0) :
+    (PlanarRookAlgebra k n δ₁) ≃ₐ[k] (PlanarRookAlgebra k n 1) := {
+      toFun := fun x => ∑ d , PlanarRookAlgebra.single 1 d (x d * (δ₁^ (n - d.through_index)))
+      invFun := fun y => ∑ d, PlanarRookAlgebra.single δ₁ d (y d / (δ₁^ (n - d.through_index)))
+      left_inv := by
+        intro x
+        simp only
+        conv => {
+          lhs
+          arg 2
+          intro x₁
+          arg 3
+          arg 1
+          rw [Finset.univ.sum_apply]
+          simp [PlanarRookAlgebra.single_apply]
+        }
+        conv => {
+          lhs
+          arg 2
+          intro x₁
+          arg 3
+          simp [δ₁_nonzero]
+        }
+        rw [←PlanarRookAlgebra.sum_single δ₁ x]
+      right_inv := by
+        intro x
+        simp only
+        conv => {
+          lhs
+          arg 2
+          intro x₁
+          arg 3
+          arg 1
+          rw [Finset.univ.sum_apply]
+          simp [PlanarRookAlgebra.single_apply]
+        }
+        conv => {
+          lhs
+          arg 2
+          intro x₁
+          arg 3
+          simp [δ₁_nonzero]
+        }
+        rw [←PlanarRookAlgebra.sum_single 1 x]
+      map_mul' := by
+        intro x y
+        rw [Finset.sum_mul_sum]
+        conv => {
+          rhs
+          arg 2
+          ext x₁
+          arg 2
+          ext x₂
+          rw [PlanarRookAlgebra.mul_single_single]
+          arg 3
+          ring_nf
+          arg 1
+          rw [mul_assoc]
+          arg 2
+          rw [←pow_add]
+          arg 2
+        }
+        apply PlanarRookAlgebra.ext
+        intro d
+        conv => {
+          lhs
+          rw [Finset.sum_apply d]
+          arg 2
+          ext x₁
+          rw [PlanarRookAlgebra.single_apply]
+        }
+        conv => {
+          lhs
+          rw [Finset.sum_ite_eq_of_mem (h:=Finset.mem_univ d)]
+          rw [PlanarRookAlgebra.mul_apply]
+          rw [Finset.sum_mul]
+          arg 2
+          ext x₁
+          rw [Finset.sum_mul]
+        }
+        conv => {
+          rhs
+          rw [Finset.sum_apply d]
+          arg 2
+          ext x₁
+          rw [Finset.sum_apply d]
+          arg 2
+          ext x₂
+          rw [PlanarRookAlgebra.single_apply]
+        }
+        apply Finset.sum_congr rfl
+        intro x₁ hx₁
+        apply Finset.sum_congr rfl
+        intro x₂ hx₂
+        rw [ite_mul]
+        by_cases h : d = x₁ * x₂
+        · simp[h]
+          ring_nf
+          conv => {
+            rhs
+            rw [mul_assoc]
+            arg 2
+            rw [←pow_add]
+          }
+          conv => {
+            lhs
+            rw [mul_assoc]
+            arg 2
+            rw [←pow_add]
+            arg 2
+            unfold PlanarRook.Monoid.mul_exponent
+            rw [←Int.toNat_sub _ _]
+            rw [←Int.toNat_add (PlanarRook.Monoid.mul_exponent_ge_zero _ _)
+                 (sub_nonneg_of_le (Int.ofNat_le.mpr (PlanarRook.Diagram.through_index_le_left _)))]
+            unfold PlanarRook.Monoid.mul_exponent'
+            simp
+            rw [sub_add_comm]
+            rw [Int.toNat_add (sub_nonneg_of_le
+              (Int.ofNat_le.mpr (PlanarRook.Diagram.through_index_le_left _)))
+                 (sub_nonneg_of_le (Int.ofNat_le.mpr (PlanarRook.Diagram.through_index_le_left _)))]
+            simp
+            rw [add_comm]
+          }
+        · simp only [h]
+          rw [eq_comm] at h
+          simp only [h]
+          simp
+      map_add' := by
+        intro x y
+        conv => {
+          rhs
+          rw [←Finset.sum_add_distrib]
+        }
+        apply Finset.sum_congr rfl
+        intro x₁  hx₁
+        rw [←PlanarRookAlgebra.add_single 1 x₁]
+        congr
+        rw [←add_mul]
+        simp
+      commutes' := by
+        intro r
+        rw [PlanarRookAlgebra.algebra_map]
+        rw [PlanarRookAlgebra.algebra_map]
+        conv => {
+          lhs
+          arg 2
+          ext x
+          arg 3
+          simp
+          unfold single_one_ring_hom
+          simp
+          rw [PlanarRookAlgebra.one_is]
+          rw [PlanarRookAlgebra.smul_single δ₁]
+          rw [PlanarRookAlgebra.single_apply]
+          simp
+        }
+        ext x
+        conv => {
+          lhs
+          rw [Finset.univ.sum_apply x]
+          arg 2
+          ext c
+          rw [PlanarRookAlgebra.single_apply]
+        }
+        simp only [Finset.univ.sum_ite_eq, Finset.mem_univ, ↓reduceIte]
+        conv => {
+          rhs
+          simp
+          unfold single_one_ring_hom
+          simp
+          rw [PlanarRookAlgebra.one_is]
+          rw [PlanarRookAlgebra.smul_single 1]
+          rw [PlanarRookAlgebra.single_apply]
+          simp
+        }
+        by_cases h : x = (PlanarRook.Diagram.id n)
+        · simp only [h, ↓reduceIte]
+          rw [PlanarRook.Diagram.through_index_of_id]
+          simp
+        · simp only [h, ↓reduceIte]
+    }
