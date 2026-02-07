@@ -1,3 +1,8 @@
+/-
+Copyright (c) 2026 Robert A. Spencer. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Robert A. Spencer
+-/
 import Mathlib.Algebra.Field.Basic
 import Mathlib.Algebra.Algebra.Defs
 import Mathlib.LinearAlgebra.LinearIndependent.Defs
@@ -42,10 +47,10 @@ theorem CellularAlgebra.c_injective {μ : Λ k A} {s₁ t₁ s₂ t₂ : tableau
 noncomputable def CellularAlgebra.ι : A →ₗ[k] A :=
   Module.Basis.constr (S := k) (cellular.c) (fun ⟨μ, (s, t)⟩ => c ⟨μ, (t, s)⟩)
 
-theorem CellularAlgebra.ι_involution:
-  Function.Involutive (ι k A) := by
+-- Cellular algebras are equipped with an involution, which is the linear map that swaps
+-- the two tableaux in the basis elements.
+theorem CellularAlgebra.ι_involution : Function.Involutive (ι k A) := by
     unfold Function.Involutive
-
     have h := Module.Basis.constr_self (cellular.c) k  (LinearMap.id)
     have j (a: A): LinearMap.id (R:=k) a = a := rfl
     conv => {
@@ -60,7 +65,6 @@ theorem CellularAlgebra.ι_involution:
       rw [←LinearMap.comp_apply]
     }
     apply LinearMap.ext_iff.mp
-
     have q := Module.Basis.constr_comp (cellular.c) k (ι k A) (fun ⟨μ, (s,t)⟩ => c ⟨μ, (t, s)⟩)
     conv => {
       lhs
@@ -70,13 +74,12 @@ theorem CellularAlgebra.ι_involution:
     rw[← q]
     apply congrArg
     ext x
-    simp
+    have q := Module.Basis.constr_basis (cellular.c) k (fun ⟨μ, (s,t)⟩ => c ⟨μ, (t, s)⟩)
     conv => {
       lhs
       unfold CellularAlgebra.ι
-      rw [Module.Basis.constr_basis (cellular.c) k (fun ⟨μ, (s,t)⟩ => c ⟨μ, (t, s)⟩) ]
+      arg 2
+      ext x
+      rw[←q x]
     }
-    apply LinearMap.ext
-    sorry
-
-#check congrArg
+    simp
