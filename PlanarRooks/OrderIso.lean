@@ -3,6 +3,9 @@ Copyright (c) 2026 Robert A. Spencer. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Robert A. Spencer
 -/
+import Mathlib.Data.Finset.Basic
+import Mathlib.Data.Finset.Card
+import Mathlib.Data.Finset.Sort
 
 /-!
 # Order Isomorphisms between Finsets
@@ -10,15 +13,11 @@ Authors: Robert A. Spencer
 This module provides some utilities for working with order isomorphisms between finite sets.
 -/
 
-import Mathlib.Data.Finset.Basic
-import Mathlib.Data.Finset.Card
-import Mathlib.Data.Finset.Sort
-
 section
 
 open OrderIso
 
-variable {α β : Type}[LinearOrder α] [LinearOrder β]
+variable {α β : Type} [LinearOrder α] [LinearOrder β]
 
 /-- There is a unique order isomorphism between finsets of equal cardinality
 when the source type has a well-founded linear order.
