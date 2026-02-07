@@ -34,6 +34,19 @@ import Mathlib.Order.Fin.Basic
 
 import PlanarRooks.OrderIso
 
+/-!
+# Planar Rook Diagrams
+
+A _rook diagram_ on a $n \times m$ board is a collection of mutually non-attacking rooks.
+It is _planar_ if no rook is "North-East" or "South-West" of any other.
+
+Diagramatically, we can assign each rook to two numbers indicating its row and column. Due to
+the non-attacking condition, these numbers are unique to each rook. We can then draw this as
+two columns of vertices (one of $n$ points and one of $m$) with lines connecting a vertex on
+the left and on the right if they label the row and column of the same rook. The planarity
+condition is then equivalent to the condition that these lines do not cross.
+-/
+
 namespace PlanarRook
 
 /-- A planar rook diagram with n left vertices and m right vertices is given by

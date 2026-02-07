@@ -20,7 +20,10 @@ def spanall (Λ : Type) (S : Set Λ) (tableau : Λ → Type)
   Submodule.span k (Set.range (ι :=  Σ μ : S, tableau μ × tableau μ)
     (fun ⟨μ, (s, t)⟩ => c ⟨μ, (s, t)⟩))
 
--- A definition of a cellular algebra, in the style of Graham and Lehrer.
+def antiinvolution (A : Type) [Ring A] (f : A → A) : Prop := ∀ (a b : A), f (a * b) = f b * f a
+
+/- A definition of a cellular algebra, in the style of Graham and Lehrer.
+-/
 class CellularAlgebra (k : Type) [Field k] (A : Type) [Ring A] [Algebra k A] where
   (Λ : Type)
   [Λ_order : PartialOrder Λ]
@@ -28,6 +31,7 @@ class CellularAlgebra (k : Type) [Field k] (A : Type) [Ring A] [Algebra k A] whe
   (tableau : Λ → Type)
   [fintype_tableau : ∀ μ : Λ, Fintype (tableau μ)]
   (c : Module.Basis (ι := Σ μ : Λ, tableau μ × tableau μ) k A)
+  (ι_antiinvolution : antiinvolution A (c.constr (S := k) (fun ⟨μ, (s, t)⟩ => c ⟨μ, (t, s)⟩)))
   (r : Π (μ : Λ), (a : A) → tableau μ → tableau μ → k)
   (multiplication_rule : ∀ (μ : Λ) (s t : tableau μ) (a : A),
     a * (c ⟨μ, (s, t)⟩) ≡ ∑ (u : tableau μ), r μ a s u • (c ⟨μ, (u, t)⟩)
@@ -45,7 +49,7 @@ theorem CellularAlgebra.c_injective {μ : Λ k A} {s₁ t₁ s₂ t₂ : tableau
     exact k
 
 noncomputable def CellularAlgebra.ι : A →ₗ[k] A :=
-  Module.Basis.constr (S := k) (cellular.c) (fun ⟨μ, (s, t)⟩ => c ⟨μ, (t, s)⟩)
+  c.constr (S := k) (fun ⟨μ, (s, t)⟩ => c ⟨μ, (t, s)⟩)
 
 -- Cellular algebras are equipped with an involution, which is the linear map that swaps
 -- the two tableaux in the basis elements.
