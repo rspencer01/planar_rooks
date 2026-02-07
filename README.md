@@ -31,7 +31,8 @@ This is an incomplete list of things that need to be done.
  * [x] Independence on the parameter
 
 #### Cellular Algebras
- * [ ] Defintions of cellular algebras
+ * [x] Defintions of cellular algebras 
+ * [ ] Structure of cellular algebras
  * [ ] Statements of results in cellular algebras
 
 #### Representation theory of Planar Rook Algebras
