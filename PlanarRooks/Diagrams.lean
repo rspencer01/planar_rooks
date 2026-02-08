@@ -83,6 +83,10 @@ instance : Finite (Diagram n m) := by
 noncomputable instance : Fintype (Diagram n m) := by
   apply Fintype.ofFinite
 
+/-!
+## Examples
+-/
+
 /-- The empty diagram has no defects -/
 def empty (n m : ℕ) : Diagram n m :=
   { left_defects := ∅
@@ -114,8 +118,15 @@ def example_2 : Diagram 5 3 :=
   , right_defects := {1, 2}
   , consistant := by simp }
 
--- A diagram has a "through-index": the number of defects on each side
--- Diagrammatically, this is the number of lines connecting left and right vertices
+/-!
+## Through indices
+
+A diagram has a "through-index": the number of defects on each side
+Diagrammatically, this is the number of lines connecting left and right vertices, or
+equivalently the number of rooks.
+-/
+
+/-- The through index of a diagram is the size of its left (or right) defects. -/
 def through_index {n m : ℕ}
   (d : Diagram n m) : ℕ :=
     d.left_defects.card
@@ -125,6 +136,7 @@ theorem through_index_eq_right {n m : ℕ}
   d.through_index = d.right_defects.card := by
     rw [through_index, d.consistant]
 
+/-- Through indices are bounded by the size of the left defects. -/
 theorem through_index_le_left {n m : ℕ}
   (d : Diagram n m) :
   d.through_index ≤ n := by
@@ -135,6 +147,7 @@ theorem through_index_le_left {n m : ℕ}
     }
     exact Finset.card_le_univ (α := Fin n) _
 
+/-- Through indices are bounded by the size of the right defects. -/
 theorem through_index_le_right {n m : ℕ}
   (d : Diagram n m) :
   d.through_index ≤ m := by
@@ -149,7 +162,11 @@ theorem through_index_of_id {n : ℕ} :
   (id n).through_index = n := by
     simp [through_index, id]
 
--- A diagram defines a bijection between left and right defects
+theorem through_index_of_empty {n m : ℕ} :
+  (empty n m).through_index = 0 := by
+    simp [through_index, empty]
+
+/-- A diagram defines a bijection between left and right defects -/
 def lr_bijection {n m : ℕ}
   (d : Diagram n m) :
   d.left_defects ≃o d.right_defects :=

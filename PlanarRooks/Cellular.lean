@@ -11,6 +11,13 @@ import Mathlib.LinearAlgebra.SModEq.Basic
 import Mathlib.RingTheory.Ideal.Quotient.Defs
 import Mathlib.LinearAlgebra.Basis.Defs
 
+/-! # Cellular algebras
+
+This file defines cellular algebras, in the style of Graham and Lehrer. The definition is not
+exactly the same as in their paper, but it is close enough for our purposes. We also define cell
+modules and the resultant representation theory.
+-/
+
 variable (k : Type) [Field k]
 variable (A : Type) [Ring A] [Algebra k A]
 
@@ -40,11 +47,12 @@ class CellularAlgebra (k : Type) [Field k] (A : Type) [Ring A] [Algebra k A] whe
 
 variable [cellular : CellularAlgebra k A]
 
+instance (μ : cellular.Λ) : Fintype (cellular.tableau μ) := cellular.fintype_tableau μ
+
 theorem CellularAlgebra.c_injective {μ : Λ k A} {s₁ t₁ s₂ t₂ : tableau μ}
     (h : c ⟨μ, (s₁, t₁)⟩ = c ⟨μ, (s₂, t₂)⟩) :
   s₁ = s₂ ∧ t₁ = t₂ := by
-    have h₂ := Module.Basis.injective cellular.c
-    have k := h₂ h
+    have k := Module.Basis.injective cellular.c h
     simp only [Sigma.mk.injEq, heq_eq_eq, Prod.mk.injEq, true_and] at k
     exact k
 
@@ -87,3 +95,39 @@ theorem CellularAlgebra.ι_involution : Function.Involutive (ι k A) := by
       rw[←q x]
     }
     simp
+
+section CellularAlgebra
+
+variable (k : Type) [Field k]
+variable (A : Type) [Ring A] [Algebra k A]
+variable [cellular : CellularAlgebra k A]
+
+/-! ## Cell modules
+-/
+
+/-- A cell module can be thought of as being build on the basis of tableaux -/
+def cell_module (μ : cellular.Λ) : Type := cellular.tableau μ →₀ k
+
+noncomputable instance : AddCommMonoid (cell_module k A μ) :=
+  inferInstanceAs (AddCommMonoid (cellular.tableau μ →₀ k))
+
+noncomputable instance : Module k (cell_module k A μ) :=
+  inferInstanceAs (Module k (cellular.tableau μ →₀ k))
+
+noncomputable instance cell_module_basis (μ : cellular.Λ) :
+  Module.Basis (cellular.tableau μ) k (cell_module k A μ) := {
+  repr := LinearEquiv.refl k (CellularAlgebra.tableau μ →₀ k)
+}
+
+noncomputable instance cell_module_module (μ : cellular.Λ) : Module A (cell_module k A μ) where
+  smul := fun a x => Module.Basis.constr (cell_module_basis k A μ) k
+    (fun s => ∑ (u : cellular.tableau μ), (cellular.r μ a s u) • (cell_module_basis k A μ u))
+    x
+  mul_smul := sorry
+  one_smul := sorry
+  add_smul := sorry
+  smul_add := sorry
+  zero_smul := sorry
+  smul_zero := sorry
+
+end CellularAlgebra
