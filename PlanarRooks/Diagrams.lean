@@ -158,13 +158,14 @@ theorem through_index_le_right {n m : ℕ}
     }
     exact Finset.card_le_univ (α := Fin m) _
 
-theorem through_index_of_id {n : ℕ} :
-  (id n).through_index = n := by
+theorem through_index_of_id {n : ℕ} : (id n).through_index = n := by
     simp [through_index, id]
 
-theorem through_index_of_empty {n m : ℕ} :
-  (empty n m).through_index = 0 := by
+theorem through_index_of_empty {n m : ℕ} : (empty n m).through_index = 0 := by
     simp [through_index, empty]
+
+/-! ## Diagrams as partial bijections
+-/
 
 /-- A diagram defines a bijection between left and right defects -/
 def lr_bijection {n m : ℕ}
@@ -172,8 +173,8 @@ def lr_bijection {n m : ℕ}
   d.left_defects ≃o d.right_defects :=
     (unique_finite_orderiso d.consistant).default
 
-def lr_bijection_of_id_is_id {n : ℕ} :
-  (id n).lr_bijection = OrderIso.refl _ := Subsingleton.elim _ _
+def lr_bijection_of_id_is_id {n : ℕ} : (id n).lr_bijection = OrderIso.refl _ :=
+  Subsingleton.elim _ _
 
 def of_lr_bijection {n m : ℕ}
   (left_defects : Finset (Fin n))
@@ -203,8 +204,9 @@ def lr_bijection_of_of_lr_bijection {n m : ℕ}
     right_defects
     bijection).lr_bijection = bijection := Subsingleton.elim _ bijection
 
--- Diagrams act on Fin n by sending left defects to their
--- corresponding right defect, and undefined elsewhere.
+/- Diagrams act on Fin n by sending left defects to their
+corresponding right defect, and undefined elsewhere.
+-/
 def act {n m : ℕ} (d : Diagram n m) (i : Fin n) :
   Option (Fin m) :=
   if h : i ∈ d.left_defects then
@@ -213,14 +215,8 @@ def act {n m : ℕ} (d : Diagram n m) (i : Fin n) :
     none
 
 -- The action of the identity diagram is the identity function
-def act_of_id {n : ℕ}
-  (i : Fin n) :
-  act (id n) i = some i :=
-by
-  simp [
-    act,
-    lr_bijection_of_id_is_id,
-  ]
+def act_of_id {n : ℕ} (i : Fin n) : act (id n) i = some i := by
+  simp [act, lr_bijection_of_id_is_id]
   simp [id]
 
 -- The action of the empty diagram is nowhere defined
@@ -230,6 +226,9 @@ by
   simp [Diagram.act, Diagram.empty]
 
 end Diagram
+
+/-! ## Multiplication of diagrams
+-/
 
 def Diagram.mul {n m k : ℕ}
   (d₁ : Diagram n m)
@@ -659,9 +658,18 @@ theorem Monoid.one_def {n : ℕ} :
   (1 : Diagram n n) = Diagram.id n := by
     rfl
 
--- When multiplying two diagrams, we are left with a number of disconnected
--- components. The number of these is the exponent in the planar rook algebra's
--- multiplication.
+/-! ## The twist factor in the monoid
+
+There is a natural number that arises when multiplying two diagrams,
+`PlanarRook.Monoid.mul_exponent`, which counts the number of disconnected components in the
+resulting diagram. This can be used when defining `PlanarRook.Algebra` to determine the
+"twist": the power of `δ` that appears. Here we collate some results about this number.
+-/
+
+/- When multiplying two diagrams, we are left with a number of disconnected
+components. The number of these is the exponent in the planar rook algebra's
+multiplication.
+-/
 def Monoid.mul_exponent' {n m k : ℕ}
   (d₁ : Diagram n m)
   (d₂ : Diagram m k) :
@@ -791,6 +799,9 @@ def Monoid.mul_exponent_assoc {n m k l : ℕ}
     rw [←Int.toNat_add (PlanarRook.Monoid.mul_exponent_ge_zero _ _)
                        (PlanarRook.Monoid.mul_exponent_ge_zero _ _)]
     rw [PlanarRook.Monoid.mul_exponent_assoc']
+
+/-! ## The monoid involution
+-/
 
 def Diagram.ι : Diagram n m → Diagram m n := fun d =>{
   left_defects := d.right_defects,

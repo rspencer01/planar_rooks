@@ -10,6 +10,8 @@ import Mathlib.LinearAlgebra.Quotient.Defs
 import Mathlib.LinearAlgebra.SModEq.Basic
 import Mathlib.RingTheory.Ideal.Quotient.Defs
 import Mathlib.LinearAlgebra.Basis.Defs
+import Mathlib.Algebra.Quotient
+import Mathlib.RingTheory.SimpleModule.Basic
 
 /-! # Cellular algebras
 
@@ -108,8 +110,8 @@ variable [cellular : CellularAlgebra k A]
 /-- A cell module can be thought of as being build on the basis of tableaux -/
 def cell_module (μ : cellular.Λ) : Type := cellular.tableau μ →₀ k
 
-noncomputable instance : AddCommMonoid (cell_module k A μ) :=
-  inferInstanceAs (AddCommMonoid (cellular.tableau μ →₀ k))
+noncomputable instance : AddCommGroup (cell_module k A μ) :=
+  inferInstanceAs (AddCommGroup (cellular.tableau μ →₀ k))
 
 noncomputable instance : Module k (cell_module k A μ) :=
   inferInstanceAs (Module k (cellular.tableau μ →₀ k))
@@ -119,15 +121,41 @@ noncomputable instance cell_module_basis (μ : cellular.Λ) :
   repr := LinearEquiv.refl k (CellularAlgebra.tableau μ →₀ k)
 }
 
-noncomputable instance cell_module_module (μ : cellular.Λ) : Module A (cell_module k A μ) where
+noncomputable instance {μ} : SMul A (cell_module k A μ) := {
   smul := fun a x => Module.Basis.constr (cell_module_basis k A μ) k
     (fun s => ∑ (u : cellular.tableau μ), (cellular.r μ a s u) • (cell_module_basis k A μ u))
     x
+  }
+
+noncomputable instance cell_module_module (μ : cellular.Λ) : Module A (cell_module k A μ) where
   mul_smul := sorry
   one_smul := sorry
   add_smul := sorry
   smul_add := sorry
   zero_smul := sorry
   smul_zero := sorry
+
+def cell_module_form (μ : cellular.Λ) : cell_module k A μ →ₗ[k] (cell_module k A μ) →ₗ[k] k :=
+  sorry
+
+def cell_module_radical (μ : cellular.Λ) : Submodule A (cell_module k A μ) := {
+  carrier := {x | ∀ y, cell_module_form k A μ x y = 0},
+  add_mem' := by
+    intro x₁ x₂ hx₁ hx₂
+    simp only [Set.mem_setOf_eq] at hx₁ hx₂
+    simp only [Set.mem_setOf_eq, map_add, LinearMap.add_apply]
+    intro y
+    have hy₁ := hx₁ y
+    have hy₂ := hx₂ y
+    simp [hy₁, hy₂]
+  zero_mem' := by
+    intro y
+    simp only [map_zero, LinearMap.zero_apply]
+  smul_mem' := sorry
+  }
+
+def simple_module (μ : cellular.Λ) : Type := (cell_module k A μ) ⧸ (cell_module_radical k A μ)
+
+theorem simple_module_simple (μ : cellular.Λ) : IsSimpleModule A (simple_module k A μ) := sorry
 
 end CellularAlgebra

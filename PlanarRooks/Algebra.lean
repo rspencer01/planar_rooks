@@ -24,29 +24,25 @@ instance : AddCommMonoid (PlanarRookAlgebra k n δ) :=
 
 @[simp]
 theorem PlanarRookAlgebra.zero_coeff (d : PlanarRook.Diagram n n) :
-    (0 : PlanarRookAlgebra k n δ) d = 0 :=
-  rfl
+    (0 : PlanarRookAlgebra k n δ) d = 0 := rfl
 
 @[simp]
 theorem PlanarRookAlgebra.add_coeff (x₁ x₂ : PlanarRookAlgebra k n δ) (d : PlanarRook.Diagram n n) :
-    (x₁ + x₂) d = (x₁ d) + (x₂ d) :=
-  rfl
+    (x₁ + x₂) d = (x₁ d) + (x₂ d) := rfl
 
-instance : Module k (PlanarRookAlgebra k n δ) :=
-  Pi.module _ _ k
+instance : Module k (PlanarRookAlgebra k n δ) := Pi.module _ _ k
 
 def PlanarRookAlgebra.single : (PlanarRook.Diagram n n) → k → PlanarRookAlgebra k n δ :=
-  Function.update 0
+  Pi.single
 
+@[simp]
 def PlanarRookAlgebra.single_apply (d₁ d₂ : PlanarRook.Diagram n n) (c : k) :
-  (PlanarRookAlgebra.single δ d₁ c) d₂ = if d₂ = d₁ then c else 0 := by
-    simp [PlanarRookAlgebra.single, Function.update]
+  (PlanarRookAlgebra.single δ d₁ c) d₂ = if d₂ = d₁ then c else 0 := Pi.single_apply _ _ _
 
 theorem PlanarRookAlgebra.smul_single (d₁ : PlanarRook.Diagram n n) (c₁ c₂ : k) :
   c₁ • (PlanarRookAlgebra.single δ d₁ c₂) = PlanarRookAlgebra.single δ d₁ (c₁ * c₂) := by
-    ext x
     unfold PlanarRookAlgebra.single
-    rw [←Function.update_smul]
+    rw [←Pi.single_smul]
     simp
 
 theorem PlanarRookAlgebra.sum_single (x : PlanarRookAlgebra k n δ) :
