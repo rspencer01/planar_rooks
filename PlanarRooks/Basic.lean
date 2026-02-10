@@ -5,4 +5,4 @@ Authors: Robert A. Spencer
 -/
 import PlanarRooks.Diagrams
 import PlanarRooks.Algebra
-import PlanarRooks.Cellular
+import PlanarRooks.AsCellular

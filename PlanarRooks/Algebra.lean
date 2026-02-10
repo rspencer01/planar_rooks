@@ -640,3 +640,23 @@ noncomputable def PlanarRookAlgebra.parameter_independence (n : ℕ) (δ₁ : k)
           simp
         · simp only [h, ↓reduceIte]
     }
+
+/- TODO: Move this further up, maybe it helps? -/
+noncomputable instance PlanarRookAlgebra.ring : Ring (PlanarRookAlgebra k n δ) := {
+  neg := fun x => (-1 : k) • x
+  zsmul := fun n x => (n : k) • x
+  neg_add_cancel := by
+    intro a
+    sorry
+  zsmul_zero' := by
+    intro a
+    simp
+  zsmul_succ' := by
+    intro n a
+    simp
+    sorry
+  zsmul_neg' := by
+    intro n a
+    simp
+    sorry
+}

@@ -36,12 +36,13 @@ def antiinvolution (A : Type) [Ring A] (f : A → A) : Prop := ∀ (a b : A), f 
 class CellularAlgebra (k : Type) [Field k] (A : Type) [Ring A] [Algebra k A] where
   (Λ : Type)
   [Λ_order : PartialOrder Λ]
-  [x: Fintype Λ]
+  [Λ_fintype: Fintype Λ]
   (tableau : Λ → Type)
   [fintype_tableau : ∀ μ : Λ, Fintype (tableau μ)]
+  [decidable_eq_tableau : ∀ μ : Λ, DecidableEq (tableau μ)]
   (c : Module.Basis (ι := Σ μ : Λ, tableau μ × tableau μ) k A)
   (ι_antiinvolution : antiinvolution A (c.constr (S := k) (fun ⟨μ, (s, t)⟩ => c ⟨μ, (t, s)⟩)))
-  (r : Π (μ : Λ), (a : A) → tableau μ → tableau μ → k)
+  (r : Π (μ : Λ), A →ₗ[k] tableau μ → tableau μ → k)
   (multiplication_rule : ∀ (μ : Λ) (s t : tableau μ) (a : A),
     a * (c ⟨μ, (s, t)⟩) ≡ ∑ (u : tableau μ), r μ a s u • (c ⟨μ, (u, t)⟩)
       [SMOD spanall k A Λ {ν : Λ | ν < μ} tableau c]
@@ -50,6 +51,7 @@ class CellularAlgebra (k : Type) [Field k] (A : Type) [Ring A] [Algebra k A] whe
 variable [cellular : CellularAlgebra k A]
 
 instance (μ : cellular.Λ) : Fintype (cellular.tableau μ) := cellular.fintype_tableau μ
+instance (μ : cellular.Λ) : DecidableEq (cellular.tableau μ) := cellular.decidable_eq_tableau μ
 
 theorem CellularAlgebra.c_injective {μ : Λ k A} {s₁ t₁ s₂ t₂ : tableau μ}
     (h : c ⟨μ, (s₁, t₁)⟩ = c ⟨μ, (s₂, t₂)⟩) :
@@ -57,6 +59,12 @@ theorem CellularAlgebra.c_injective {μ : Λ k A} {s₁ t₁ s₂ t₂ : tableau
     have k := Module.Basis.injective cellular.c h
     simp only [Sigma.mk.injEq, heq_eq_eq, Prod.mk.injEq, true_and] at k
     exact k
+
+theorem CellularAlgebra.r_of_id {μ} {s u : cellular.tableau μ} :
+  r μ (1 : A) s u = if s = u then 1 else 0 := sorry
+
+theorem CellularAlgebra.r_of_zero {μ} {s u : cellular.tableau μ} :
+  r μ (0 : A) s u = 0 := sorry
 
 noncomputable def CellularAlgebra.ι : A →ₗ[k] A :=
   c.constr (S := k) (fun ⟨μ, (s, t)⟩ => c ⟨μ, (t, s)⟩)
@@ -121,19 +129,56 @@ noncomputable instance cell_module_basis (μ : cellular.Λ) :
   repr := LinearEquiv.refl k (CellularAlgebra.tableau μ →₀ k)
 }
 
-noncomputable instance {μ} : SMul A (cell_module k A μ) := {
+noncomputable instance cellular_action {μ}: SMul A (cell_module k A μ) := {
   smul := fun a x => Module.Basis.constr (cell_module_basis k A μ) k
     (fun s => ∑ (u : cellular.tableau μ), (cellular.r μ a s u) • (cell_module_basis k A μ u))
     x
   }
 
+--disable notation
 noncomputable instance cell_module_module (μ : cellular.Λ) : Module A (cell_module k A μ) where
   mul_smul := sorry
-  one_smul := sorry
-  add_smul := sorry
-  smul_add := sorry
-  zero_smul := sorry
-  smul_zero := sorry
+  one_smul := by
+    intro b
+    unfold HSMul.hSMul
+    unfold instHSMul
+    simp only
+    unfold SMul.smul
+    simp only [cellular_action, Module.Basis.constr_apply_fintype, Module.Basis.equivFun_apply,
+      CellularAlgebra.r_of_id k A, ite_smul, one_smul, zero_smul, Finset.sum_ite_eq,
+      Finset.mem_univ, ↓reduceIte, Module.Basis.sum_repr]
+  add_smul := by
+    intro a b y
+    unfold HSMul.hSMul
+    unfold instHSMul
+    simp only
+    unfold SMul.smul
+    simp only [cellular_action]
+    have k : cellular.r μ (a + b) = cellular.r μ a + cellular.r μ b := sorry
+    sorry
+  smul_add := by
+    intro a x y
+    unfold HSMul.hSMul
+    unfold instHSMul
+    simp only
+    unfold SMul.smul
+    simp only [cellular_action]
+    rw [LinearMap.map_add]
+  zero_smul := by
+    intro x
+    unfold HSMul.hSMul
+    unfold instHSMul
+    simp only
+    unfold SMul.smul
+    unfold cellular_action
+    simp[CellularAlgebra.r_of_zero k A]
+  smul_zero := by
+    intro a
+    unfold HSMul.hSMul
+    unfold instHSMul
+    simp only
+    unfold SMul.smul
+    simp[cellular_action]
 
 def cell_module_form (μ : cellular.Λ) : cell_module k A μ →ₗ[k] (cell_module k A μ) →ₗ[k] k :=
   sorry
@@ -155,6 +200,10 @@ def cell_module_radical (μ : cellular.Λ) : Submodule A (cell_module k A μ) :=
   }
 
 def simple_module (μ : cellular.Λ) : Type := (cell_module k A μ) ⧸ (cell_module_radical k A μ)
+
+/- Note these should be able to be removed once some sorries are filled in -/
+instance : AddCommGroup (simple_module k A μ) := sorry
+instance : Module A (simple_module k A μ) := sorry
 
 theorem simple_module_simple (μ : cellular.Λ) : IsSimpleModule A (simple_module k A μ) := sorry
 
