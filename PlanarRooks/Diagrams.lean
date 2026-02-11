@@ -225,14 +225,11 @@ def act_of_empty {n m : ℕ} (i : Fin n) :
 by
   simp [Diagram.act, Diagram.empty]
 
-end Diagram
 
 /-! ## Multiplication of diagrams
 -/
 
-def Diagram.mul {n m k : ℕ}
-  (d₁ : Diagram n m)
-  (d₂ : Diagram m k) :
+def mul {n m k : ℕ} (d₁ : Diagram n m) (d₂ : Diagram m k) :
   Diagram n k := {
     left_defects :=
       { x | ∃ (h : x ∈ d₁.left_defects),
@@ -290,44 +287,41 @@ def Diagram.mul {n m k : ℕ}
         simp [fj]
   }
 
-instance Diagram.has_hmul :
-  HMul (Diagram n m) (Diagram m k) (Diagram n k)  :=
-  ⟨Diagram.mul⟩
+instance has_hmul : HMul (Diagram n m) (Diagram m k) (Diagram n k) := ⟨mul⟩
 
-@[simp]
-def Diagram.hmul_eq_mul {n m k : ℕ}
+def hmul_eq_mul {n m k : ℕ}
   (d₁ : Diagram n m)
   (d₂ : Diagram m k) :
-  d₁ * d₂ = Diagram.mul d₁ d₂ := by
+  d₁ * d₂ = mul d₁ d₂ := by
     rfl
 
-def Diagram.mul_id {n m : ℕ}
+def mul_id {n m : ℕ}
   (d : Diagram n m) :
-  d * (Diagram.id m) = d := by
-    rw [Diagram.hmul_eq_mul]
-    unfold Diagram.mul
+  d * (id m) = d := by
+    rw [hmul_eq_mul]
+    unfold mul
     apply Diagram.ext
-    · unfold Diagram.id
+    · unfold id
       simp
     · simp only
-      rw [Diagram.lr_bijection_of_id_is_id]
-      unfold Diagram.id
+      rw [lr_bijection_of_id_is_id]
+      unfold id
       simp
 
-def Diagram.id_mul {n m : ℕ}
+def id_mul {n m : ℕ}
   (d : Diagram n m) :
-  (Diagram.id n) * d = d := by
-    rw [Diagram.hmul_eq_mul]
-    unfold Diagram.mul
-    apply Diagram.ext
+  (id n) * d = d := by
+    rw [hmul_eq_mul]
+    unfold mul
+    apply ext
     · simp only
-      rw [Diagram.lr_bijection_of_id_is_id]
-      unfold Diagram.id
+      rw [lr_bijection_of_id_is_id]
+      unfold id
       simp
-    · unfold Diagram.id
+    · unfold id
       simp
 
-def Diagram.restate_mul₂ {n m k : ℕ}
+def restate_mul₂ {n m k : ℕ}
   (d₁ : Diagram n m)
   (d₂ : Diagram m k)
   (x : Fin n)
@@ -341,7 +335,7 @@ def Diagram.restate_mul₂ {n m k : ℕ}
       rw [hy.1]
       exact hy.2
 
-def Diagram.restate_mul₃ {n m k : ℕ}
+def restate_mul₃ {n m k : ℕ}
   (d₁ : Diagram n m)
   (d₂ : Diagram m k)
   (x : Fin n)
@@ -430,7 +424,7 @@ def Diagram.restate_mul₃ {n m k : ℕ}
         rw [Subsingleton.elim f]
        rw [kk]
 
-def Diagram.restate_mul₄ {n m k : ℕ}
+def restate_mul₄ {n m k : ℕ}
   (d₁ : Diagram n m)
   (d₂ : Diagram m k)
   (x : Fin k)
@@ -445,7 +439,7 @@ def Diagram.restate_mul₄ {n m k : ℕ}
       rw [y]
       exact hy
 
-def Diagram.restate_mul₅ {n m k : ℕ}
+def restate_mul₅ {n m k : ℕ}
   (d₁ : Diagram n m)
   (d₂ : Diagram m k)
   (x : Fin k)
@@ -535,7 +529,7 @@ def Diagram.restate_mul₅ {n m k : ℕ}
            rw [Subsingleton.elim f]
          rw [kk]
 
-def Diagram.mul_assoc {n m k l : ℕ}
+def mul_assoc {n m k l : ℕ}
   (d₁ : Diagram n m)
   (d₂ : Diagram m k)
   (d₃ : Diagram k l) :
@@ -644,7 +638,9 @@ def Diagram.mul_assoc {n m k l : ℕ}
          rw [kk] at hb
          exact hb
 
-#eval (Diagram.mul (Diagram.example_1) (Diagram.id 5)).act 4
+#eval (mul (example_1) (id 5)).act 4
+
+end Diagram
 
 instance Monoid : Monoid (Diagram n n) := {
   mul := HMul.hMul,
@@ -775,7 +771,9 @@ def Monoid.mul_exponent_assoc' {n m k l : ℕ}
   PlanarRook.Monoid.mul_exponent' d₁ (d₂ * d₃) +
   PlanarRook.Monoid.mul_exponent' d₂ d₃ := by
     unfold PlanarRook.Monoid.mul_exponent'
-    simp [Diagram.mul_assoc]
+    simp only [Diagram.hmul_eq_mul]
+    simp only [Diagram.mul_assoc]
+    rw [Diagram.hmul_eq_mul d₂ d₃]
     ring
 
 def Monoid.mul_exponent_ge_zero {n m k : ℕ}

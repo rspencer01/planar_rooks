@@ -12,14 +12,14 @@ import PlanarRooks.Algebra
 variable (k : Type) [Field k] (δ : k)
 variable (n : ℕ)
 
-instance : CellularAlgebra k (PlanarRookAlgebra k n δ) where
+noncomputable instance : CellularAlgebra k (PlanarRookAlgebra n δ) where
   Λ := Fin n
   Λ_order := by infer_instance
   Λ_fintype := by infer_instance
   tableau := fun k => {S : Finset (Fin n) // S.card = k}
   fintype_tableau := by infer_instance
   decidable_eq_tableau := by infer_instance
-  c := sorry
+  c := Module.Basis.reindex (PlanarRookAlgebra.diagram_basis _) sorry
   ι_antiinvolution := sorry
   r := sorry
   multiplication_rule := sorry
