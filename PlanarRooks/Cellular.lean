@@ -64,7 +64,7 @@ theorem CellularAlgebra.r_of_id {μ} {s u : cellular.tableau μ} :
   r μ (1 : A) s u = if s = u then 1 else 0 := sorry
 
 theorem CellularAlgebra.r_of_zero {μ} {s u : cellular.tableau μ} :
-  r μ (0 : A) s u = 0 := sorry
+  r μ (0 : A) s u = 0 := by simp only [map_zero, Pi.zero_apply]
 
 noncomputable def CellularAlgebra.ι : A →ₗ[k] A :=
   c.constr (S := k) (fun ⟨μ, (s, t)⟩ => c ⟨μ, (t, s)⟩)
@@ -183,6 +183,9 @@ noncomputable instance cell_module_module (μ : cellular.Λ) : Module A (cell_mo
 def cell_module_form (μ : cellular.Λ) : cell_module k A μ →ₗ[k] (cell_module k A μ) →ₗ[k] k :=
   sorry
 
+def cell_module_form_contravariant (μ : cellular.Λ) (a : A) (x y : cell_module k A μ) :
+  cell_module_form k A μ (a • x) y = cell_module_form k A μ x (cellular.ι k A a • y) := sorry
+
 def cell_module_radical (μ : cellular.Λ) : Submodule A (cell_module k A μ) := {
   carrier := {x | ∀ y, cell_module_form k A μ x y = 0},
   add_mem' := by
@@ -196,7 +199,10 @@ def cell_module_radical (μ : cellular.Λ) : Submodule A (cell_module k A μ) :=
   zero_mem' := by
     intro y
     simp only [map_zero, LinearMap.zero_apply]
-  smul_mem' := sorry
+  smul_mem' := by
+    intro c x hx y
+    rw [cell_module_form_contravariant k A μ c x y]
+    exact hx _
   }
 
 def simple_module (μ : cellular.Λ) : Type := (cell_module k A μ) ⧸ (cell_module_radical k A μ)
