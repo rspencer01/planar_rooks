@@ -72,6 +72,38 @@ by
   rfl
 
 namespace Diagram
+-- NOTE: I'm not sure - this might have been a better definition of a diagram:
+def pi_iso :  Diagram n m ≃
+  (Σ k, ({S : Finset (Fin n) // S.card = k} × {S : Finset (Fin m) // S.card = k})) := {
+  toFun := fun d => ⟨d.left_defects.card,
+                     ⟨d.left_defects, rfl⟩,
+                     ⟨d.right_defects, eq_comm.mpr d.consistant⟩⟩,
+  invFun := fun ⟨h, ⟨l, hl⟩, ⟨r, hr⟩⟩ => Diagram.mk l r (by rw [hl, hr]),
+  left_inv := fun d => by simp
+  right_inv := fun ⟨h, ⟨l, hl⟩, ⟨r, hr⟩⟩ => by
+    simp[hl]
+    cases hl
+    simp
+}
+
+def pi_iso' [NeZero n] :
+  (Σ k : ℕ ,          {S : Finset (Fin n) // S.card = k} × {S : Finset (Fin n) // S.card = k}) ≃
+  (Σ k : Fin (n + 1), {S : Finset (Fin n) // S.card = k} × {S : Finset (Fin n) // S.card = k}) := {
+    toFun := fun ⟨h, ⟨l, hl⟩, ⟨r, hr⟩⟩ => ⟨⟨h, by
+      rw [←hl]
+      have k := Finset.card_le_univ l
+      simp only [Fintype.card_fin] at k
+      simp only [gt_iff_lt]
+      rw[←Nat.le_iff_lt_add_one]
+      exact k
+      ⟩, ⟨l, hl⟩, ⟨r, hr⟩⟩,
+    invFun := fun ⟨⟨h, _⟩, ⟨l, hl⟩, ⟨r, hr⟩⟩ => ⟨h, ⟨l, hl⟩, ⟨r, hr⟩⟩,
+  }
+
+def pi_iso₂ [NeZero n] : Diagram n n ≃
+  (Σ k : Fin (n + 1), {S : Finset (Fin n) // S.card = k} × {S : Finset (Fin n) // S.card = k}) :=
+  pi_iso.trans pi_iso'
+
 -- There are only finitely many diagrams for given n and m
 instance : Finite (Diagram n m) := by
   apply Finite.of_injective (fun d => (d.left_defects, d.right_defects))
