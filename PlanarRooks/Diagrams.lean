@@ -86,9 +86,9 @@ def pi_iso :  Diagram n m ≃
     simp
 }
 
-def pi_iso' [NeZero n] :
-  (Σ k : ℕ ,          {S : Finset (Fin n) // S.card = k} × {S : Finset (Fin n) // S.card = k}) ≃
-  (Σ k : Fin (n + 1), {S : Finset (Fin n) // S.card = k} × {S : Finset (Fin n) // S.card = k}) := {
+def pi_iso' :
+  (Σ k : ℕ ,          {S : Finset (Fin n) // S.card = k} × {S : Finset (Fin m) // S.card = k}) ≃
+  (Σ k : Fin (n + 1), {S : Finset (Fin n) // S.card = k} × {S : Finset (Fin m) // S.card = k}) := {
     toFun := fun ⟨h, ⟨l, hl⟩, ⟨r, hr⟩⟩ => ⟨⟨h, by
       rw [←hl]
       have k := Finset.card_le_univ l
@@ -100,20 +100,13 @@ def pi_iso' [NeZero n] :
     invFun := fun ⟨⟨h, _⟩, ⟨l, hl⟩, ⟨r, hr⟩⟩ => ⟨h, ⟨l, hl⟩, ⟨r, hr⟩⟩,
   }
 
-def pi_iso₂ [NeZero n] : Diagram n n ≃
-  (Σ k : Fin (n + 1), {S : Finset (Fin n) // S.card = k} × {S : Finset (Fin n) // S.card = k}) :=
+def pi_iso₂ : Diagram n m ≃
+  (Σ k : Fin (n + 1), {S : Finset (Fin n) // S.card = k} × {S : Finset (Fin m) // S.card = k}) :=
   pi_iso.trans pi_iso'
 
 -- There are only finitely many diagrams for given n and m
-instance : Finite (Diagram n m) := by
-  apply Finite.of_injective (fun d => (d.left_defects, d.right_defects))
-  intro d₁ d₂ h
-  simp only [Prod.mk.injEq] at h
-  apply Diagram.ext
-  · exact h.1
-  · exact h.2
-noncomputable instance : Fintype (Diagram n m) := by
-  apply Fintype.ofFinite
+instance : Finite (Diagram n m) := Finite.of_equiv _ pi_iso₂.symm
+noncomputable instance : Fintype (Diagram n m) := Fintype.ofFinite _
 
 /-!
 ## Examples
@@ -159,25 +152,27 @@ equivalently the number of rooks.
 -/
 
 /-- The through index of a diagram is the size of its left (or right) defects. -/
-def through_index {n m : ℕ}
-  (d : Diagram n m) : ℕ :=
-    d.left_defects.card
+def through_index (d : Diagram n m) : ℕ := d.left_defects.card
 
-theorem through_index_eq_right {n m : ℕ}
-  (d : Diagram n m) :
+def through_index_of_iso (k : ℕ)
+  (s₁ : {S : Finset (Fin n) // S.card = k}) (s₂ : {S : Finset (Fin m) // S.card = k}) :
+  through_index (Diagram.pi_iso.symm ⟨k, (s₁, s₂)⟩) = k := by
+    simp [through_index, Diagram.pi_iso, s₁.property]
+
+theorem through_index_eq_right (d : Diagram n m) :
   d.through_index = d.right_defects.card := by
-    rw [through_index, d.consistant]
+    rw [←d.consistant]
+    rfl
 
 /-- Through indices are bounded by the size of the left defects. -/
-theorem through_index_le_left {n m : ℕ}
-  (d : Diagram n m) :
+theorem through_index_le_left (d : Diagram n m) :
   d.through_index ≤ n := by
     rw [through_index]
     conv => {
       rhs
       rw [←Fintype.card_fin n]
     }
-    exact Finset.card_le_univ (α := Fin n) _
+    exact Finset.card_le_univ _
 
 /-- Through indices are bounded by the size of the right defects. -/
 theorem through_index_le_right {n m : ℕ}
@@ -188,7 +183,7 @@ theorem through_index_le_right {n m : ℕ}
       rhs
       rw [←Fintype.card_fin m]
     }
-    exact Finset.card_le_univ (α := Fin m) _
+    exact Finset.card_le_univ _
 
 theorem through_index_of_id {n : ℕ} : (id n).through_index = n := by
     simp [through_index, id]
@@ -879,5 +874,16 @@ def Diagram.ι_mul {n m : ℕ}
         rw [←Diagram.ι_lr_bijection]
         exact hb
     constructor
+
+def Diagram.ι_of_iso {n m : ℕ}
+  (k : ℕ)
+  (s₁ : {S : Finset (Fin n) // S.card = k}) (s₂ : {S : Finset (Fin m) // S.card = k}) :
+  Diagram.ι (Diagram.pi_iso.symm ⟨k, (s₁, s₂)⟩) = Diagram.pi_iso.symm ⟨k, (s₂, s₁)⟩ := by
+    simp [Diagram.ι, Diagram.pi_iso]
+def Diagram.ι_of_iso₂ {n : ℕ}
+  (k : Fin (n + 1))
+  (s₁ : {S : Finset (Fin n) // S.card = k}) (s₂ : {S : Finset (Fin n) // S.card = k}) :
+  Diagram.ι (Diagram.pi_iso.symm ⟨k, (s₁, s₂)⟩) = Diagram.pi_iso₂.symm ⟨k, (s₂, s₁)⟩ := by
+    simp [Diagram.ι, Diagram.pi_iso₂, Diagram.pi_iso, Diagram.pi_iso']
 
 end PlanarRook
