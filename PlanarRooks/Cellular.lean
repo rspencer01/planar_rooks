@@ -44,7 +44,11 @@ def tableau_span' (Λ : Type) (S : Set Λ) (tableau : Λ → Type)
   (c : Module.Basis (ι := Σ μ : Λ, tableau μ × tableau μ) k A)
   : Submodule k A :=
   Submodule.span k (all_tableaux_range k A Λ S tableau c)
-def antiinvolution (f : A →ₗ[k] A) : Prop := ∀ (a b : A), f (a * b) = f b * f a
+
+/- An anti-involution is a linear involution that reverses the order of multiplication .
+-/
+def antiinvolution (f : A →ₗ[k] A) : Prop :=
+  (Function.Involutive f) ∧ ∀ (a b : A), f (a * b) = f b * f a
 
 /- A definition of a cellular algebra, in the style of Graham and Lehrer.
 -/
@@ -142,7 +146,7 @@ theorem CellularAlgebra.action_doesnt_increase_μ
       unfold tableau_span'
       apply Submodule.mem_span_of_mem
       unfold all_tableaux_range
-      simp only [Prod.mk.eta, Sigma.eta, Set.mem_image, Sigma.exists, Prod.exists]
+      simp only [Set.mem_image, Sigma.exists, Prod.exists]
       use μ
       use sc
       use t

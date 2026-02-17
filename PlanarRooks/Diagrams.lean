@@ -31,6 +31,7 @@ import Mathlib.Order.Defs.PartialOrder
 import Mathlib.Data.Finset.Filter
 import Mathlib.Order.Hom.Set
 import Mathlib.Order.Fin.Basic
+import Mathlib.Logic.Equiv.Defs
 
 import PlanarRooks.OrderIso
 
@@ -214,22 +215,33 @@ def of_lr_bijection {n m : ℕ}
     consistant := equal_size_of_orderiso bijection
   }
 
-def lr_bijection_of_lr_bijection {n m : ℕ}
-  (d : Diagram n m) :
-  Diagram.of_lr_bijection
-    d.left_defects
-    d.right_defects
-    d.lr_bijection = d := by
-      rw [Diagram.of_lr_bijection]
+/- The bijection of a diagram is the one we started with if we construct a diagram from a bijection.
+-/
+def lr_bijection_of_lr_bijection {n m : ℕ} (d : Diagram n m) :
+  Diagram.of_lr_bijection d.left_defects d.right_defects d.lr_bijection = d := by
+    rw [Diagram.of_lr_bijection]
 
+/- The bijection of a diagram constructed from a bijection is the original bijection.
+-/
 def lr_bijection_of_of_lr_bijection {n m : ℕ}
   (left_defects : Finset (Fin n))
   (right_defects : Finset (Fin m))
   (bijection : left_defects ≃o right_defects) :
-  (Diagram.of_lr_bijection
-    left_defects
-    right_defects
-    bijection).lr_bijection = bijection := Subsingleton.elim _ bijection
+  (Diagram.of_lr_bijection left_defects right_defects bijection).lr_bijection = bijection :=
+    Subsingleton.elim _ bijection
+
+def lr_bijections_are_diagrams {n m : ℕ} :
+  Diagram n m ≃ (Σ (left_defects : Finset (Fin n)) (right_defects : Finset (Fin m)),
+    left_defects ≃o right_defects) := {
+    invFun := fun ⟨left_defects, right_defects, bijection⟩ =>
+      Diagram.of_lr_bijection left_defects right_defects bijection,
+    toFun := fun d => ⟨d.left_defects, d.right_defects, d.lr_bijection⟩
+    right_inv := fun d => by
+      simp only [of_lr_bijection]
+      apply congr_arg
+      apply congr_arg
+      exact lr_bijection_of_of_lr_bijection d.fst d.2.fst d.2.snd
+  }
 
 /- Diagrams act on Fin n by sending left defects to their
 corresponding right defect, and undefined elsewhere.
@@ -241,17 +253,15 @@ def act {n m : ℕ} (d : Diagram n m) (i : Fin n) :
   else
     none
 
--- The action of the identity diagram is the identity function
+/- The action of the identity diagram is the identity function
+-/
 def act_of_id {n : ℕ} (i : Fin n) : act (id n) i = some i := by
   simp [act, lr_bijection_of_id_is_id]
   simp [id]
 
--- The action of the empty diagram is nowhere defined
-def act_of_empty {n m : ℕ} (i : Fin n) :
-  Diagram.act (Diagram.empty n m) i = none :=
-by
-  simp [Diagram.act, Diagram.empty]
-
+/- The action of the empty diagram is nowhere defined
+-/
+def act_of_empty {n m : ℕ} (i : Fin n) : act (empty n m) i = none := rfl
 
 /-! ## Multiplication of diagrams
 -/
@@ -259,11 +269,9 @@ by
 def mul {n m k : ℕ} (d₁ : Diagram n m) (d₂ : Diagram m k) :
   Diagram n k := {
     left_defects :=
-      { x | ∃ (h : x ∈ d₁.left_defects),
-        ↑(d₁.lr_bijection ⟨x, h⟩) ∈ d₂.left_defects },
+      { x | ∃ (h : x ∈ d₁.left_defects), ↑(d₁.lr_bijection ⟨x, h⟩) ∈ d₂.left_defects},
     right_defects :=
-      { y | ∃ (h : y ∈ d₂.right_defects),
-        ↑(d₂.lr_bijection.symm ⟨y, h⟩) ∈ d₁.right_defects },
+      { y | ∃ (h : y ∈ d₂.right_defects), ↑(d₂.lr_bijection.symm ⟨y, h⟩) ∈ d₁.right_defects},
     consistant := by
       let fi {n m k : ℕ}
         (d₁ : Diagram n m)
@@ -316,9 +324,7 @@ def mul {n m k : ℕ} (d₁ : Diagram n m) (d₂ : Diagram m k) :
 
 instance has_hmul : HMul (Diagram n m) (Diagram m k) (Diagram n k) := ⟨mul⟩
 
-def hmul_eq_mul {n m k : ℕ}
-  (d₁ : Diagram n m)
-  (d₂ : Diagram m k) :
+def hmul_eq_mul {n m k : ℕ} (d₁ : Diagram n m) (d₂ : Diagram m k) :
   d₁ * d₂ = mul d₁ d₂ := by
     rfl
 
@@ -704,7 +710,6 @@ theorem Monoid.mul_exponent_is_stubs' {n m k : ℕ}
   (d₂ : Diagram m k) :
   PlanarRook.Monoid.mul_exponent' d₁ d₂ =
     Finset.card {x | x ∈ (d₁.right_defects ∪ d₂.left_defects)ᶜ} := by
-      classical
       have h : (d₁ * d₂).through_index = (d₁.right_defects ∩ d₂.left_defects).card := by
         unfold Diagram.through_index
         rw [Diagram.hmul_eq_mul]
@@ -831,11 +836,10 @@ def Monoid.mul_exponent_assoc {n m k l : ℕ}
 def Diagram.ι : Diagram n m → Diagram m n := fun d =>{
   left_defects := d.right_defects,
   right_defects := d.left_defects,
-  consistant := by rw [d.consistant]
+  consistant := d.consistant.symm
 }
 
-def Diagram.ι_involutive {n m : ℕ}
-  (d : Diagram n m) :
+def Diagram.ι_involutive {n m : ℕ} (d : Diagram n m) :
   Diagram.ι (Diagram.ι d) = d := by
     apply Diagram.ext
     · simp [Diagram.ι]
@@ -844,14 +848,11 @@ def Diagram.ι_involutive {n m : ℕ}
 instance {n : ℕ} : Function.Involutive (α := Diagram n n) Diagram.ι :=
   Diagram.ι_involutive
 
-def Diagram.ι_lr_bijection {n m : ℕ}
-  (d : Diagram n m) :
-  d.ι.lr_bijection = d.lr_bijection.symm := by
-    exact Subsingleton.elim _ _
+def Diagram.ι_lr_bijection {n m : ℕ} (d : Diagram n m) :
+  d.ι.lr_bijection = d.lr_bijection.symm :=
+     Subsingleton.elim _ _
 
-def Diagram.ι_mul {n m : ℕ}
-  (d₁ : Diagram n m)
-  (d₂ : Diagram m n) :
+def Diagram.ι_mul {n m : ℕ} (d₁ : Diagram n m) (d₂ : Diagram m n) :
   (d₁ * d₂).ι = d₂.ι * d₁.ι := by
     apply Diagram.ext
     · simp only [hmul_eq_mul]
