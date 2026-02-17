@@ -19,6 +19,8 @@ noncomputable instance : CellularAlgebra k (PlanarRookAlgebra n δ) where
   tableau := fun k => {S : Finset (Fin n) // S.card = k}
   fintype_tableau := by infer_instance
   decidable_eq_tableau := by infer_instance
+  inhabited_tableau := fun μ => ⟨(Finset.range μ).attachFin
+    (fun m hm => lt_of_lt_of_le (Finset.mem_range.mp hm) (Nat.le_of_lt_succ μ.is_lt)), by simp⟩
   c := Module.Basis.reindex (PlanarRookAlgebra.diagram_basis _) PlanarRook.Diagram.pi_iso₂
   ι_antiinvolution := sorry
   r := sorry
