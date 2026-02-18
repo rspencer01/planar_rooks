@@ -106,8 +106,15 @@ def pi_iso₂ : Diagram n m ≃
   pi_iso.trans pi_iso'
 
 -- There are only finitely many diagrams for given n and m
-instance : Finite (Diagram n m) := Finite.of_equiv _ pi_iso₂.symm
-noncomputable instance : Fintype (Diagram n m) := Fintype.ofFinite _
+instance {n m} : Finite (Diagram n m) := Finite.of_equiv _ pi_iso₂.symm
+instance {n m} : Fintype (Diagram n m) := {
+  elems := Finset.univ.image pi_iso₂.invFun,
+  complete := by
+    intro d
+    simp only [Finset.mem_image, Finset.mem_univ, true_and]
+    use pi_iso₂.toFun d
+    simp
+}
 
 /-!
 ## Examples

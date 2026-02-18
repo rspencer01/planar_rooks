@@ -22,6 +22,9 @@ def PlanarRookAlgebra.ext {n : ℕ} {δ : k} {x y : PlanarRookAlgebra n δ} :
 instance : AddCommMonoid (PlanarRookAlgebra n δ) :=
   inferInstanceAs (AddCommMonoid ((PlanarRook.Diagram n n) → k))
 
+instance PlanarRookAlgebra.addCommGroup : AddCommGroup (PlanarRookAlgebra n δ) :=
+  inferInstanceAs (AddCommGroup ((PlanarRook.Diagram n n) → k))
+
 @[simp]
 theorem PlanarRookAlgebra.zero_coeff (d : PlanarRook.Diagram n n) :
     (0 : PlanarRookAlgebra n δ) d = 0 := rfl
@@ -30,6 +33,8 @@ theorem PlanarRookAlgebra.zero_coeff (d : PlanarRook.Diagram n n) :
 theorem PlanarRookAlgebra.add_coeff (x₁ x₂ : PlanarRookAlgebra n δ) (d : PlanarRook.Diagram n n) :
     (x₁ + x₂) d = (x₁ d) + (x₂ d) := rfl
 
+/- The planar rook algebra is a vector space over k.
+-/
 instance : Module k (PlanarRookAlgebra n δ) := Pi.module _ _ k
 
 def PlanarRookAlgebra.single : (PlanarRook.Diagram n n) → k → PlanarRookAlgebra n δ :=
@@ -39,11 +44,12 @@ def PlanarRookAlgebra.single : (PlanarRook.Diagram n n) → k → PlanarRookAlge
 def PlanarRookAlgebra.single_apply (d₁ d₂ : PlanarRook.Diagram n n) (c : k) :
   (PlanarRookAlgebra.single δ d₁ c) d₂ = if d₂ = d₁ then c else 0 := Pi.single_apply _ _ _
 
+@[simp]
 theorem PlanarRookAlgebra.smul_single (d₁ : PlanarRook.Diagram n n) (c₁ c₂ : k) :
   c₁ • (PlanarRookAlgebra.single δ d₁ c₂) = PlanarRookAlgebra.single δ d₁ (c₁ * c₂) := by
     unfold PlanarRookAlgebra.single
     rw [←Pi.single_smul]
-    simp
+    simp only [smul_eq_mul]
 
 theorem PlanarRookAlgebra.sum_single (x : PlanarRookAlgebra n δ) :
   x = ∑ d : (PlanarRook.Diagram n n), PlanarRookAlgebra.single δ d (x d) := by
@@ -55,16 +61,16 @@ theorem PlanarRookAlgebra.add_single (d : PlanarRook.Diagram n n) (c₁ c₂ : k
   PlanarRookAlgebra.single δ d (c₁ + c₂) =
     PlanarRookAlgebra.single δ d c₁ + PlanarRookAlgebra.single δ d c₂ := by
     ext x
-    simp [PlanarRookAlgebra.single_apply]
+    simp only [single_apply, add_coeff]
     by_cases h: x = d
-    · simp [h]
-    · simp [h]
+    · simp only [h, ↓reduceIte]
+    · simp only [h, ↓reduceIte, add_zero]
 
 /-- Multiplication in the planar rook algebra depends on a paramter δ
 
 This paramter is raised to the exponent of the number of dangling strands
 after monoid multiplication. -/
-noncomputable def PlanarRookAlgebra.mul' (x y : PlanarRookAlgebra n δ) :
+def PlanarRookAlgebra.mul (x y : PlanarRookAlgebra n δ) :
     PlanarRookAlgebra n δ :=
   ∑ d₁ : (PlanarRook.Diagram n n),
     ∑ d₂ : (PlanarRook.Diagram n n),
@@ -84,9 +90,7 @@ def PlanarRookAlgebra.one_apply (d : PlanarRook.Diagram n n) :
       rw [eq_comm] at h
       exact h
 
-
-noncomputable instance : Mul (PlanarRookAlgebra n δ) :=
-  ⟨PlanarRookAlgebra.mul' δ⟩
+instance : Mul (PlanarRookAlgebra n δ) := ⟨PlanarRookAlgebra.mul δ⟩
 
 theorem PlanarRookAlgebra.mul_def (x y : PlanarRookAlgebra n δ) :
     x * y =
@@ -104,9 +108,7 @@ theorem PlanarRookAlgebra.mul_apply (x y : PlanarRookAlgebra n δ) :
     lhs
     rw [Fintype.sum_apply m]
     arg 2
-    simp [Finset.sum_apply m (s := Finset.univ)]
-    simp [PlanarRookAlgebra.smul_single δ]
-    simp [PlanarRookAlgebra.single_apply]
+    simp [Finset.sum_apply m (s := Finset.univ), PlanarRookAlgebra.smul_single δ]
   }
   apply Finset.sum_congr rfl
   intro x₁ hx₁
@@ -116,7 +118,7 @@ theorem PlanarRookAlgebra.mul_apply (x y : PlanarRookAlgebra n δ) :
 
 -- Disable notation for now
 --set_option pp.notation false
-noncomputable instance PlanarRookAlgebra.nonUnitalNonAssocSemiring :
+instance PlanarRookAlgebra.nonUnitalNonAssocSemiring :
     NonUnitalNonAssocSemiring (PlanarRookAlgebra n δ) := {
   left_distrib := fun a b c => by
     ext d
@@ -133,8 +135,7 @@ noncomputable instance PlanarRookAlgebra.nonUnitalNonAssocSemiring :
     by_cases h : x * y = d
     · simp[h]
       ring
-    · simp only [h]
-      simp
+    · simp [h]
   right_distrib := fun a b c => by
     ext d
     simp only [PlanarRookAlgebra.add_coeff]
@@ -150,8 +151,7 @@ noncomputable instance PlanarRookAlgebra.nonUnitalNonAssocSemiring :
     by_cases h : x * y = d
     · simp[h]
       ring
-    · simp only [h]
-      simp
+    · simp [h]
   zero_mul := by simp [PlanarRookAlgebra.mul_def]
   mul_zero := by simp [PlanarRookAlgebra.mul_def]
 }
@@ -230,10 +230,10 @@ theorem PlanarRookAlgebra.mul_single_single (d₁ d₂ : PlanarRook.Diagram n n)
     simp
   }
   rw [Finset.univ.sum_ite_eq']
-  simp [PlanarRookAlgebra.smul_single δ]
+  simp
   ring_nf
 
-noncomputable instance PlanarRookAlgebra.nonUnitalSemiring :
+instance PlanarRookAlgebra.nonUnitalSemiring :
     NonUnitalSemiring (PlanarRookAlgebra n δ) := {
   mul_assoc := by
     intro a b c
@@ -285,11 +285,12 @@ noncomputable instance PlanarRookAlgebra.nonUnitalSemiring :
     }
 }
 
-instance PlanarRookAlgebra.hasOne : One (PlanarRookAlgebra n δ) :=
-  ⟨PlanarRookAlgebra.one δ⟩
+instance PlanarRookAlgebra.hasOne : One (PlanarRookAlgebra n δ) := ⟨PlanarRookAlgebra.one δ⟩
 
 theorem PlanarRookAlgebra.one_def : (1 : PlanarRookAlgebra n δ) = PlanarRookAlgebra.one δ :=
   rfl
+
+instance PlanarRookAlgebra.addGroupWithOne : AddGroupWithOne (PlanarRookAlgebra n δ) := {}
 
 noncomputable instance PlanarRookAlgebra.is_semiring :
     Semiring (PlanarRookAlgebra (k:=k) n δ) := {
@@ -399,7 +400,7 @@ def PlanarRookAlgebra.single_one_ring_hom : k →+* PlanarRookAlgebra n δ :=
       exact PlanarRookAlgebra.add_single δ _ _ _
   }
 
-noncomputable instance PlanarRookAlgebra.is_algebra (δ : k) :
+instance PlanarRookAlgebra.is_algebra (δ : k) :
     Algebra k (PlanarRookAlgebra n δ) := {
   algebraMap := PlanarRookAlgebra.single_one_ring_hom δ,
   commutes' := fun r x => by
@@ -459,7 +460,13 @@ theorem PlanarRookAlgebra.algebra_map :
   algebraMap k (PlanarRookAlgebra n δ) = PlanarRookAlgebra.single_one_ring_hom δ :=
   rfl
 
-noncomputable def PlanarRookAlgebra.parameter_independence (n : ℕ) (δ₁ : k) (δ₁_nonzero : δ₁ ≠ 0) :
+/- The planar rook algebra is independent of the parameter δ, up to algebra isomorphism, as long as
+it is not zero.
+
+This is to say, there are only "two" planar rook algebras, the one where δ = 0 and the one where δ
+is nonzero (and might as well be 1).
+-/
+def PlanarRookAlgebra.parameter_independence (n : ℕ) (δ₁ : k) (δ₁_nonzero : δ₁ ≠ 0) :
     (PlanarRookAlgebra n δ₁) ≃ₐ[k] (PlanarRookAlgebra n (1 : k)) := {
       toFun := fun x => ∑ d , PlanarRookAlgebra.single 1 d (x d * (δ₁^ (n - d.through_index)))
       invFun := fun y => ∑ d, PlanarRookAlgebra.single δ₁ d (y d / (δ₁^ (n - d.through_index)))
@@ -641,24 +648,9 @@ noncomputable def PlanarRookAlgebra.parameter_independence (n : ℕ) (δ₁ : k)
         · simp only [h, ↓reduceIte]
     }
 
-/- TODO: Move this further up, maybe it helps? -/
-noncomputable instance PlanarRookAlgebra.ring : Ring (PlanarRookAlgebra n δ) := {
-  neg := fun x => (-1 : k) • x
-  zsmul := fun n x => (n : k) • x
-  neg_add_cancel := by
-    intro a
-    sorry
-  zsmul_zero' := by
-    intro a
-    simp
-  zsmul_succ' := by
-    intro n a
-    simp
-    sorry
-  zsmul_neg' := by
-    intro n a
-    simp
-    sorry
+noncomputable instance PlanarRookAlgebra.ringConGen : Ring (PlanarRookAlgebra n δ) := {
+  PlanarRookAlgebra.is_semiring _, PlanarRookAlgebra.addCommGroup _,
+  PlanarRookAlgebra.addGroupWithOne _ with
 }
 
 noncomputable instance PlanarRookAlgebra.diagram_basis :
