@@ -209,7 +209,7 @@ theorem PlanarRookAlgebra.single_mul (x : PlanarRookAlgebra n δ)
     ext d₁
     simp [Finset.univ.sum_ite_eq']
   }
-  simp only [Finset.univ.sum_ite_eq', Finset.mem_univ, ↓reduceIte, PlanarRook.Diagram.hmul_eq_mul]
+  simp only [Finset.univ.sum_ite_eq', Finset.mem_univ, ↓reduceIte]
   apply Finset.sum_congr rfl
   intro x₁ hx₁
   simp[PlanarRookAlgebra.smul_single δ]
@@ -298,7 +298,7 @@ noncomputable instance PlanarRookAlgebra.is_semiring :
     ext d
     rw [PlanarRookAlgebra.one_def]
     rw [PlanarRookAlgebra.mul_apply]
-    simp only [PlanarRook.Diagram.hmul_eq_mul, PlanarRookAlgebra.one_apply, ite_mul, one_mul,
+    simp only [ PlanarRookAlgebra.one_apply, ite_mul, one_mul,
       zero_mul]
     conv => {
       lhs
@@ -325,7 +325,7 @@ noncomputable instance PlanarRookAlgebra.is_semiring :
       arg 2
       ext x
       arg 1
-      rw [←PlanarRook.Diagram.hmul_eq_mul,PlanarRook.Diagram.id_mul]
+      rw [PlanarRook.Diagram.id_mul]
     }
     conv => {
       lhs
@@ -339,7 +339,7 @@ noncomputable instance PlanarRookAlgebra.is_semiring :
     ext d
     rw [PlanarRookAlgebra.one_def]
     rw [PlanarRookAlgebra.mul_apply]
-    simp only [PlanarRook.Diagram.hmul_eq_mul, one_apply, mul_ite, mul_one, mul_zero, ite_mul,
+    simp only [one_apply, mul_ite, mul_one, mul_zero, ite_mul,
       zero_mul]
     conv => {
       lhs
@@ -348,7 +348,7 @@ noncomputable instance PlanarRookAlgebra.is_semiring :
       arg 2
       ext y
       rw [←ite_and]
-      simp [and_comm (a := x.mul y = d) (b :=PlanarRook.Diagram.id n = y)]
+      simp [and_comm (a := x * y = d) (b :=PlanarRook.Diagram.id n = y)]
     }
     conv => {
       lhs
@@ -368,7 +368,7 @@ noncomputable instance PlanarRookAlgebra.is_semiring :
       lhs
       arg 2
       ext x
-      simp [←PlanarRook.Diagram.hmul_eq_mul,PlanarRook.Diagram.mul_id]
+      simp [PlanarRook.Diagram.mul_id]
     }
     simp [@PlanarRook.Monoid.mul_exponent_eq_zero_of_id n]
 }
