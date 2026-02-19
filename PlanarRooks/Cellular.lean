@@ -33,8 +33,8 @@ sets and spans. Here, as in the definition that follows, $\Lambda$ is some type 
 there is map that takes a weight to a set of "tableaux" for that weight.
 -/
 
-/- The set of all triples ${}^\mu_{s_1, s_2}$ where $\mu$ is a weight in some set and $s_1, s_2$ are
-tableaux of shape $\mu$.
+/-- The set of all triples ${}^\mu_{s_1, s_2}$ where $\mu$ is a weight in some set and $s_1, s_2$
+are tableaux of shape $\mu$.
 
 We express it here as the preimage of the set $S$ under the map from all triples ${}^\mu_{s_1, s_2}$
 to their weight $\mu$.
@@ -56,7 +56,7 @@ def tableau_span' (Λ : Type) (S : Set Λ) (tableau : Λ → Type)
   : Submodule k A :=
   Submodule.span k (all_tableaux_range k A Λ S tableau c)
 
-/- An anti-involution is a linear involution that reverses the order of multiplication .
+/-- An anti-involution is a linear involution that reverses the order of multiplication.
 -/
 def antiinvolution (f : A →ₗ[k] A) : Prop :=
   (Function.Involutive f) ∧ ∀ (a b : A), f (a * b) = f b * f a
@@ -64,7 +64,7 @@ def antiinvolution (f : A →ₗ[k] A) : Prop :=
 /-! ## Main definition
 -/
 
-/- A definition of a cellular algebra, in the style of Graham and Lehrer.
+/-- A definition of a cellular algebra, in the style of Graham and Lehrer.
 -/
 class CellularAlgebra (k : Type) [Field k] (A : Type) [Ring A] [Algebra k A] where
   (Λ : Type)
@@ -96,7 +96,7 @@ instance : LE cellular.Λ := cellular.Λ_order.toLE
 instance : LT cellular.Λ := cellular.Λ_order.toLT
 instance (μ : cellular.Λ) : Inhabited (cellular.tableau μ) := cellular.inhabited_tableau μ
 
-/- The subspace of $A$ spanned by the basis elements corresponding to tableaux of weights in a set
+/-- The subspace of $A$ spanned by the basis elements corresponding to tableaux of weights in a set
 $S$.
 -/
 def CellularAlgebra.tableau_span (S : Set cellular.Λ) : Submodule k A :=
@@ -247,8 +247,9 @@ def CellularAlgebra.subcelluar_ideal (μ : cellular.Λ) : Submodule A A := {
 noncomputable def CellularAlgebra.ι : A →ₗ[k] A :=
   c.constr (S := k) (fun ⟨μ, (s, t)⟩ => c ⟨μ, (t, s)⟩)
 
--- Cellular algebras are equipped with an involution, which is the linear map that swaps
--- the two tableaux in the basis elements.
+/-- Cellular algebras are equipped with an involution, which is the linear map that swaps
+the two tableaux in the basis elements.
+-/
 theorem CellularAlgebra.ι_involution : Function.Involutive (ι k A) := by
     unfold Function.Involutive
     have h := Module.Basis.constr_self (cellular.c) k  (LinearMap.id)

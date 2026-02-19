@@ -407,9 +407,7 @@ def restate_mul₃ (d₁ : Diagram n m) (d₂ : Diagram m k) (x : Fin n)
           right_inv := fun h => by simp
        }
        have kk : ↑((d₁ * d₂).lr_bijection ⟨x, by
-         rw [hmul_eq_mul]
-         unfold Diagram.mul
-         simp only [Finset.mem_filter, Finset.mem_univ, true_and]
+         simp only [hmul_left_defects, Finset.mem_filter, Finset.mem_univ, true_and]
          use hxx
          rw[hx₁]
          exact hx₂
@@ -590,7 +588,7 @@ resulting diagram. This can be used when defining `PlanarRook.Algebra` to determ
 "twist": the power of `δ` that appears. Here we collate some results about this number.
 -/
 
-/- When multiplying two diagrams, we are left with a number of disconnected
+/-- When multiplying two diagrams, we are left with a number of disconnected
 components. The number of these is the exponent in the planar rook algebra's
 multiplication.
 -/
@@ -607,9 +605,7 @@ theorem mul_exponent_is_stubs' {n m k : ℕ}
     Finset.card {x | x ∈ (d₁.right_defects ∪ d₂.left_defects)ᶜ} := by
       have h : (d₁ * d₂).through_index = (d₁.right_defects ∩ d₂.left_defects).card := by
         unfold Diagram.through_index
-        rw [Diagram.hmul_eq_mul]
-        unfold Diagram.mul
-        simp only
+        simp only [Diagram.hmul_left_defects]
         apply Finset.card_bij' (α := Fin n) (β := Fin m) (i := fun a ha => d₁.lr_bijection ⟨a, by
             simp only [Finset.mem_filter, Finset.mem_univ, true_and] at ha
             rcases ha with ⟨haa, hab⟩
@@ -724,6 +720,7 @@ def mul_exponent_assoc {n m k l : ℕ}
     rw [PlanarRook.Monoid.mul_exponent_assoc']
 
 end Monoid
+
 /-! ## The monoid involution
 
 There is a natural involution on diagrams, given by reflecting them across the vertical axis.
@@ -752,13 +749,12 @@ def Diagram.ι_lr_bijection {n m : ℕ} (d : Diagram n m) :
 def Diagram.ι_mul {n m k : ℕ} (d₁ : Diagram n m) (d₂ : Diagram m k) :
   (d₁ * d₂).ι = d₂.ι * d₁.ι := by
     apply Diagram.ext
-    · simp only [hmul_eq_mul]
-      unfold Diagram.mul
+    · simp only [hmul_left_defects]
       simp only [ι]
       ext x
       constructor
       · intro h
-        simp only [Finset.mem_filter, Finset.mem_univ, true_and] at h
+        simp only [hmul_right_defects, Finset.mem_filter, Finset.mem_univ, true_and] at h
         rcases h with ⟨ha, hb⟩
         simp only [Finset.mem_filter, Finset.mem_univ, true_and]
         use ha
@@ -767,7 +763,7 @@ def Diagram.ι_mul {n m k : ℕ} (d₁ : Diagram n m) (d₂ : Diagram m k) :
       · intro h
         simp only [Finset.mem_filter, Finset.mem_univ, true_and] at h
         rcases h with ⟨ha, hb⟩
-        simp only [Finset.mem_filter, Finset.mem_univ, true_and]
+        simp only [hmul_right_defects, Finset.mem_filter, Finset.mem_univ, true_and]
         use ha
         rw [←Diagram.ι_lr_bijection]
         exact hb

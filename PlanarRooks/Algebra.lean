@@ -116,8 +116,6 @@ theorem PlanarRookAlgebra.mul_apply (x y : PlanarRookAlgebra n δ) :
   intro x₂ hx₂
   simp[eq_comm]
 
--- Disable notation for now
---set_option pp.notation false
 instance PlanarRookAlgebra.nonUnitalNonAssocSemiring :
     NonUnitalNonAssocSemiring (PlanarRookAlgebra n δ) := {
   left_distrib := fun a b c => by
