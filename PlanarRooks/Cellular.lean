@@ -26,19 +26,30 @@ modules and the resultant representation theory.
 variable (k : Type) [Field k]
 variable (A : Type) [Ring A] [Algebra k A]
 
-def tableaux_in (Λ : Type) (S : Set Λ) (tableau : Λ → Type) :=
-  {μst : Σ μ : Λ, tableau μ × tableau μ | μst.fst ∈ S}
+/-! ## Preliminary and helper definitions
 
-def tableaux_in_mono (Λ : Type) (S₁ S₂ : Set Λ) (tableau : Λ → Type) (h : S₁ ⊆ S₂) :
-  tableaux_in Λ S₁ tableau ⊆ tableaux_in Λ S₂ tableau := by
-    unfold tableaux_in
-    simp only [Set.setOf_subset_setOf]
-    intro ⟨a, (s,t)⟩
-    exact Set.mem_of_subset_of_mem h
+To speak naturally about cellular algebras it will be useful to have some shorthands for tableaux
+sets and spans. Here, as in the definition that follows, $\Lambda$ is some type of "weights" and
+there is map that takes a weight to a set of "tableaux" for that weight.
+-/
+
+/- The set of all triples ${}^\mu_{s_1, s_2}$ where $\mu$ is a weight in some set and $s_1, s_2$ are
+tableaux of shape $\mu$.
+
+We express it here as the preimage of the set $S$ under the map from all triples ${}^\mu_{s_1, s_2}$
+to their weight $\mu$.
+-/
+def double_tableaux_in (Λ : Type) (S : Set Λ) (tableau : Λ → Type) :
+  Set (Σ μ : Λ, tableau μ × tableau μ) :=
+  Sigma.fst⁻¹' S
+
+lemma double_tableaux_in_mono {Λ : Type} {S₁ S₂ : Set Λ} {tableau : Λ → Type} (h : S₁ ⊆ S₂) :
+  double_tableaux_in Λ S₁ tableau ⊆ double_tableaux_in Λ S₂ tableau :=
+    Set.preimage_mono h
 
 def all_tableaux_range (Λ : Type) (S : Set Λ) (tableau : Λ → Type)
   (c : Module.Basis (ι := Σ μ : Λ, tableau μ × tableau μ) k A) :=
-     c '' tableaux_in Λ S tableau
+     c '' double_tableaux_in Λ S tableau
 
 def tableau_span' (Λ : Type) (S : Set Λ) (tableau : Λ → Type)
   (c : Module.Basis (ι := Σ μ : Λ, tableau μ × tableau μ) k A)
@@ -49,6 +60,9 @@ def tableau_span' (Λ : Type) (S : Set Λ) (tableau : Λ → Type)
 -/
 def antiinvolution (f : A →ₗ[k] A) : Prop :=
   (Function.Involutive f) ∧ ∀ (a b : A), f (a * b) = f b * f a
+
+/-! ## Main definition
+-/
 
 /- A definition of a cellular algebra, in the style of Graham and Lehrer.
 -/
@@ -70,20 +84,27 @@ class CellularAlgebra (k : Type) [Field k] (A : Type) [Ring A] [Algebra k A] whe
 
 variable [cellular : CellularAlgebra k A]
 
+/-! ### Instances and restatements
+
+For convenience, we restate some of the data of a cellular algebra as instances, so that we can use
+them without having to refer to the `cellular` namespace.
+-/
 instance (μ : cellular.Λ) : Fintype (cellular.tableau μ) := cellular.fintype_tableau μ
 instance (μ : cellular.Λ) : DecidableEq (cellular.tableau μ) := cellular.decidable_eq_tableau μ
 instance : PartialOrder cellular.Λ := cellular.Λ_order
 instance : LE cellular.Λ := cellular.Λ_order.toLE
 instance : LT cellular.Λ := cellular.Λ_order.toLT
-instance : Inhabited (cellular.tableau μ) := cellular.inhabited_tableau μ
+instance (μ : cellular.Λ) : Inhabited (cellular.tableau μ) := cellular.inhabited_tableau μ
 
+/- The subspace of $A$ spanned by the basis elements corresponding to tableaux of weights in a set
+$S$.
+-/
 def CellularAlgebra.tableau_span (S : Set cellular.Λ) : Submodule k A :=
   tableau_span' k A cellular.Λ S cellular.tableau cellular.c
 
 def CellularAlgebra.tableau_span_mono (S₁ S₂ : Set cellular.Λ) (h : S₁ ⊆ S₂) :
-  CellularAlgebra.tableau_span k A S₁ ≤ CellularAlgebra.tableau_span k A S₂ := by
-    apply Submodule.span_mono
-    exact Set.image_mono (tableaux_in_mono _ _ _ _ h)
+  CellularAlgebra.tableau_span k A S₁ ≤ CellularAlgebra.tableau_span k A S₂ :=
+    Submodule.span_mono (Set.image_mono (double_tableaux_in_mono h))
 
 def CellularAlgebra.tableau_span_mono' (S₁ S₂ : Set cellular.Λ) (h : S₁ ⊂ S₂) :
   CellularAlgebra.tableau_span k A S₁ < CellularAlgebra.tableau_span k A S₂ := by
@@ -101,13 +122,13 @@ def CellularAlgebra.tableau_span_mono' (S₁ S₂ : Set cellular.Λ) (h : S₁ �
       have q : c ⟨q, t⟩ ∈ Submodule.span k (all_tableaux_range k A _ S₂ tableau c) := by
         apply Submodule.mem_span_of_mem
         unfold all_tableaux_range
-        unfold tableaux_in
+        unfold double_tableaux_in
         apply (Set.mem_image _ _ _).mpr
         use ⟨q, t⟩
         simp [hq₁]
       have kk₂ := kk q
       have jj := (Module.Basis.self_mem_span_image cellular.c).mp kk₂
-      unfold tableaux_in at jj
+      unfold double_tableaux_in at jj
       simp at jj
       contradiction
 
@@ -151,7 +172,7 @@ theorem CellularAlgebra.action_doesnt_increase_μ
       use sc
       use t
       constructor
-      · unfold tableaux_in
+      · unfold double_tableaux_in
         simp
       · rfl
     have tttu := Submodule.add_mem _ q ttt
@@ -177,8 +198,8 @@ def CellularAlgebra.celluar_ideal (μ : cellular.Λ) : Submodule A A := {
     simp only
     apply Submodule.smul_mem
     have tt := hl₁ hc₁
-    unfold tableaux_in at tt
-    simp only [Set.mem_setOf_eq] at tt
+    unfold double_tableaux_in at tt
+    simp only [Set.preimage_setOf_eq, Set.mem_setOf_eq] at tt
     have q := action_doesnt_increase_μ k A c c₁.fst c₁.snd.1 c₁.snd.2
     have s : {ν | ν ≤ c₁.fst} ⊆ {ν | ν ≤ μ } := by
       simp only [Set.setOf_subset_setOf]
@@ -209,8 +230,8 @@ def CellularAlgebra.subcelluar_ideal (μ : cellular.Λ) : Submodule A A := {
     simp only
     apply Submodule.smul_mem
     have tt := hl₁ hc₁
-    unfold tableaux_in at tt
-    simp only [Set.mem_setOf_eq] at tt
+    unfold double_tableaux_in at tt
+    simp only [Set.preimage_setOf_eq, Set.mem_setOf_eq] at tt
     have q := action_doesnt_increase_μ k A c c₁.fst c₁.snd.1 c₁.snd.2
     have s : {ν | ν ≤ c₁.fst} ⊆ {ν | ν < μ } := by
       simp only [Set.setOf_subset_setOf]
