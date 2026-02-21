@@ -356,21 +356,19 @@ def id_mul (d : Diagram n m) : (id n) * d = d := by
 
 /-! ### Lemmata for proving associativity of multiplication
 -/
-def restate_mul₂ (d₁ : Diagram n m) (d₂ : Diagram m k) (x : Fin n)
-  (hxx : x ∈ d₁.left_defects)
-  (hx : ∃ (y : Fin m), d₁.lr_bijection ⟨x, hxx⟩ = y ∧ y ∈ d₂.left_defects) :
-    x ∈ (d₁ * d₂).left_defects := by
+def restate_mul₂ (d₁ : Diagram n m) (d₂ : Diagram m k) (x : d₁.left_defects)
+  (hx : ∃ (y : Fin m), d₁.lr_bijection x = y ∧ y ∈ d₂.left_defects) :
+    x.val ∈ (d₁ * d₂).left_defects := by
       simp only [hmul_left_defects, Finset.mem_filter, Finset.mem_univ, true_and]
       rcases hx with ⟨y, hy⟩
-      use hxx
+      use x.prop
       rw [hy.1]
       exact hy.2
 
-def restate_mul₃ (d₁ : Diagram n m) (d₂ : Diagram m k) (x : Fin n)
-  (hxx : x ∈ d₁.left_defects)
+def restate_mul₃ (d₁ : Diagram n m) (d₂ : Diagram m k) (x : d₁.left_defects)
   (y : Fin m)
-  (hx : d₁.lr_bijection ⟨x, hxx⟩ = y ∧ y ∈ d₂.left_defects) :
-    ((d₁ * d₂).lr_bijection ⟨x, Diagram.restate_mul₂ d₁ d₂ x hxx ⟨y, hx⟩⟩)
+  (hx : d₁.lr_bijection x = y ∧ y ∈ d₂.left_defects) :
+    ((d₁ * d₂).lr_bijection ⟨x, Diagram.restate_mul₂ d₁ d₂ x ⟨y, hx⟩⟩)
      = (⟨d₂.lr_bijection ⟨y, hx.2⟩, by
          simp only [hmul_right_defects, Finset.mem_filter, Finset.mem_univ, Subtype.coe_eta,
            OrderIso.symm_apply_apply, SetLike.coe_mem, exists_const, true_and]
@@ -386,6 +384,7 @@ def restate_mul₃ (d₁ : Diagram n m) (d₂ : Diagram m k) (x : Fin n)
          arg 1
          rw [←hx₁]
        }
+       have xd₁d₂ : ↑x ∈ (d₁ * d₂).left_defects := by simp [hx₁, hx₂, x.prop]
        let f := (d₁ * d₂).lr_bijection
        let g : ↥(d₁ * d₂).left_defects ≃o ↥(d₁ * d₂).right_defects := {
           toFun := fun ⟨x, hx⟩ => ⟨d₂.lr_bijection ⟨d₁.lr_bijection ⟨x, by
@@ -406,49 +405,33 @@ def restate_mul₃ (d₁ : Diagram n m) (d₂ : Diagram m k) (x : Fin n)
           left_inv := fun h => by simp
           right_inv := fun h => by simp
        }
-       have kk : ↑((d₁ * d₂).lr_bijection ⟨x, by
-         simp only [hmul_left_defects, Finset.mem_filter, Finset.mem_univ, true_and]
-         use hxx
-         rw[hx₁]
-         exact hx₂
-      ⟩) = f ⟨x, by
-         simp only [hmul_left_defects, Finset.mem_filter, Finset.mem_univ, true_and]
-         use hxx
-         rw[hx₁]
-         exact hx₂⟩ := rfl
+       have kk : ↑((d₁ * d₂).lr_bijection ⟨x, xd₁d₂⟩) = f ⟨x, xd₁d₂⟩ := rfl
        rw [kk]
-       have kk : ⟨d₂.lr_bijection ⟨↑(d₁.lr_bijection ⟨x, hxx⟩), by
+       have kk : ⟨d₂.lr_bijection ⟨↑(d₁.lr_bijection x), by
          rw [hx₁]
          exact hx₂
-         ⟩, by simp ⟩ = g ⟨x, by
-           simp only [hmul_left_defects, Finset.mem_filter, Finset.mem_univ, true_and]
-           use hxx
-           rw [hx₁]
-           exact hx₂
-         ⟩ := rfl
+         ⟩, by simp ⟩ = g ⟨x, xd₁d₂⟩ := rfl
        rw [kk]
        have kk : f = g := by rw [Subsingleton.elim f]
        rw [kk]
 
-def restate_mul₄ (d₁ : Diagram n m) (d₂ : Diagram m k) (x : Fin k)
-  (hxx : x ∈ d₂.right_defects)
+def restate_mul₄ (d₁ : Diagram n m) (d₂ : Diagram m k) (x : d₂.right_defects)
   (y : Fin m)
-  (hx : d₂.lr_bijection.symm ⟨x, hxx⟩ = y ∧ y ∈ d₁.right_defects) :
-    x ∈ (d₁ * d₂).right_defects := by
+  (hx : d₂.lr_bijection.symm x = y ∧ y ∈ d₁.right_defects) :
+    x.val ∈ (d₁ * d₂).right_defects := by
       simp only [hmul_right_defects, Finset.mem_filter, Finset.mem_univ, true_and]
       rcases hx with ⟨y, hy⟩
-      use hxx
+      use x.prop
       rw [y]
       exact hy
 
 def restate_mul₅ {n m k : ℕ}
   (d₁ : Diagram n m)
   (d₂ : Diagram m k)
-  (x : Fin k)
-  (hxx : x ∈ d₂.right_defects)
+  (x : d₂.right_defects)
   (y : Fin m)
-  (hx : d₂.lr_bijection.symm ⟨x, hxx⟩ = y ∧ y ∈ d₁.right_defects) :
-    ((d₁ * d₂).lr_bijection.symm ⟨x, Diagram.restate_mul₄ d₁ d₂ x hxx y hx⟩)
+  (hx : d₂.lr_bijection.symm x = y ∧ y ∈ d₁.right_defects) :
+    ((d₁ * d₂).lr_bijection.symm ⟨x, Diagram.restate_mul₄ d₁ d₂ x y hx⟩)
      = (⟨d₁.lr_bijection.symm ⟨y, hx.2⟩, by
        simp only [hmul_left_defects, Finset.mem_filter, Finset.mem_univ, Subtype.coe_eta,
          OrderIso.apply_symm_apply, SetLike.coe_mem, exists_const, true_and]
@@ -464,6 +447,7 @@ def restate_mul₅ {n m k : ℕ}
           arg 1
           rw [←hx₁]
          }
+         have xd₁d₂ : ↑x ∈ (d₁ * d₂).right_defects := by simp [hx₁, hx₂, x.prop]
          let f := (d₁ * d₂).lr_bijection.symm
          let g : ↥(d₁ * d₂).right_defects ≃o ↥(d₁ * d₂).left_defects := {
             toFun := fun ⟨y, hy⟩ => ⟨d₁.lr_bijection.symm ⟨d₂.lr_bijection.symm ⟨y, by
@@ -484,34 +468,18 @@ def restate_mul₅ {n m k : ℕ}
             left_inv := fun h => by simp
             right_inv := fun h => by simp
          }
-         have kk : ↑((d₁ * d₂).lr_bijection.symm ⟨x, by
-           simp only [hmul_right_defects, Finset.mem_filter, Finset.mem_univ, true_and]
-           use hxx
-           rw[hx₁]
-           exact hx₂
-          ⟩) = f ⟨x, by
-             simp only [hmul_right_defects, Finset.mem_filter, Finset.mem_univ, true_and]
-             use hxx
-             rw[hx₁]
-             exact hx₂⟩ := rfl
+         have kk : ↑((d₁ * d₂).lr_bijection.symm ⟨x, xd₁d₂⟩) = f ⟨x, xd₁d₂⟩ := rfl
          rw [kk]
-         have kk : ⟨↑(d₁.lr_bijection.symm ⟨↑(d₂.lr_bijection.symm ⟨x, hxx⟩), by
+         have kk : ⟨↑(d₁.lr_bijection.symm ⟨↑(d₂.lr_bijection.symm x), by
            rw [hx₁]
            exact hx₂
-           ⟩), by simp⟩ = g ⟨x, by
-             simp only [hmul_right_defects, Finset.mem_filter, Finset.mem_univ, true_and]
-             use hxx
-             rw [hx₁]
-             exact hx₂
-           ⟩ := rfl
+           ⟩), by simp⟩ = g ⟨x, xd₁d₂⟩ := rfl
          rw [kk]
          have kk : f = g := by rw [Subsingleton.elim f]
          rw [kk]
-
-def mul_assoc {n m k l : ℕ}
-  (d₁ : Diagram n m)
-  (d₂ : Diagram m k)
-  (d₃ : Diagram k l) :
+/-! ### Associativity of multiplication
+-/
+def mul_assoc (d₁ : Diagram n m) (d₂ : Diagram m k) (d₃ : Diagram k l):
   (d₁ * d₂) * d₃ = d₁ * (d₂ * d₃) := by
      apply Diagram.ext
      · rw[hmul_left_defects]
@@ -525,7 +493,7 @@ def mul_assoc {n m k l : ℕ}
          rcases ha with ⟨hc, hd⟩
          use hc
          use hd
-         have kk:= Diagram.restate_mul₃ d₁ d₂ x hc (d₁.lr_bijection ⟨x, hc⟩) ⟨rfl, hd⟩
+         have kk:= Diagram.restate_mul₃ d₁ d₂ ⟨x, hc⟩ (d₁.lr_bijection ⟨x, hc⟩) ⟨rfl, hd⟩
          rw [kk] at hb
          exact hb
        · intro h
@@ -534,7 +502,7 @@ def mul_assoc {n m k l : ℕ}
          rcases h with ⟨ha, hb⟩
          rcases hb with ⟨hc, hd⟩
          constructor
-         · have kk := Diagram.restate_mul₃ d₁ d₂ x ha (d₁.lr_bijection ⟨x, ha⟩) ⟨rfl, hc⟩
+         · have kk := Diagram.restate_mul₃ d₁ d₂ ⟨x, ha⟩ (d₁.lr_bijection ⟨x, ha⟩) ⟨rfl, hc⟩
            rw [kk]
            exact hd
      · rw[hmul_right_defects]
@@ -544,7 +512,7 @@ def mul_assoc {n m k l : ℕ}
          hmul_left_defects, forall_exists_index]
          intro h ha hb
          use ⟨h, ha⟩
-         have kk := Diagram.restate_mul₅ d₂ d₃ x h (d₃.lr_bijection.symm ⟨x, h⟩) ⟨rfl, ha⟩
+         have kk := Diagram.restate_mul₅ d₂ d₃ ⟨x, h⟩ (d₃.lr_bijection.symm ⟨x, h⟩) ⟨rfl, ha⟩
          have kk₂ := SetCoe.ext_iff.mpr kk
          simp only [hmul_left_defects, hmul_right_defects] at kk₂
          rw [←kk₂] at hb
@@ -558,7 +526,7 @@ def mul_assoc {n m k l : ℕ}
          use hc
          simp only [hmul_right_defects, Finset.mem_filter, Finset.mem_univ, true_and]
          use hd
-         have kk := Diagram.restate_mul₅ d₂ d₃ x hc (d₃.lr_bijection.symm ⟨x, hc⟩)
+         have kk := Diagram.restate_mul₅ d₂ d₃ ⟨x, hc⟩ (d₃.lr_bijection.symm ⟨x, hc⟩)
            ⟨rfl, hd⟩
          have kk₂ := SetCoe.ext_iff.mpr kk
          simp only [hmul_left_defects, hmul_right_defects] at kk₂
@@ -569,6 +537,11 @@ def mul_assoc {n m k l : ℕ}
 
 end Diagram
 
+/-! ## The monoid of planar rook diagrams
+
+We can now show that the planar rook diagrams with n vertices on each side form a monoid under
+multiplication.
+-/
 instance Monoid : Monoid (Diagram n n) := {
   mul := HMul.hMul,
   one := Diagram.id n,
@@ -592,15 +565,10 @@ resulting diagram. This can be used when defining `PlanarRook.Algebra` to determ
 components. The number of these is the exponent in the planar rook algebra's
 multiplication.
 -/
-def mul_exponent' {n m k : ℕ}
-  (d₁ : Diagram n m)
-  (d₂ : Diagram m k) :
-  ℤ :=
+def mul_exponent' (d₁ : Diagram n m) (d₂ : Diagram m k) : ℤ :=
     m - d₁.through_index - d₂.through_index + (d₁ * d₂).through_index
 
-theorem mul_exponent_is_stubs' {n m k : ℕ}
-  (d₁ : Diagram n m)
-  (d₂ : Diagram m k) :
+theorem mul_exponent_is_stubs' (d₁ : Diagram n m) (d₂ : Diagram m k) :
   PlanarRook.Monoid.mul_exponent' d₁ d₂ =
     Finset.card {x | x ∈ (d₁.right_defects ∪ d₂.left_defects)ᶜ} := by
       have h : (d₁ * d₂).through_index = (d₁.right_defects ∩ d₂.left_defects).card := by
@@ -665,30 +633,25 @@ theorem mul_exponent_is_stubs' {n m k : ℕ}
       simp
       ring
 
-def mul_exponent {n m k : ℕ}
-  (d₁ : Diagram n m)
-  (d₂ : Diagram m k) :
-  ℕ :=
+def mul_exponent (d₁ : Diagram n m) (d₂ : Diagram m k) : ℕ :=
     Int.toNat (Monoid.mul_exponent' d₁ d₂)
 
-def mul_exponent_eq_zero_of_id {n : ℕ}
-  (d : Diagram n n) :
-  Monoid.mul_exponent d (Diagram.id n) = 0 := by
+/-- The identity diagram invokes zero twist when multiplied on the right. -/
+def mul_exponent_eq_zero_of_id (d : Diagram n m) :
+  Monoid.mul_exponent d (Diagram.id m) = 0 := by
     simp only [Monoid.mul_exponent, Monoid.mul_exponent']
     simp only [Diagram.mul_id]
     simp [Diagram.through_index_of_id]
 
-def mul_exponent_eq_zero_of_id' {n : ℕ}
-  (d : Diagram n n) :
+/-- The identity diagram invokes zero twist when multiplied on the left. -/
+def mul_exponent_eq_zero_of_id' (d : Diagram n m) :
   PlanarRook.Monoid.mul_exponent (Diagram.id n) d = 0 := by
     simp only [Monoid.mul_exponent, Monoid.mul_exponent']
     simp only [Diagram.id_mul]
     simp [Diagram.through_index_of_id]
 
-def mul_exponent_assoc' {n m k l : ℕ}
-  (d₁ : Diagram n m)
-  (d₂ : Diagram m k)
-  (d₃ : Diagram k l) :
+/-- The twist is additive over associated multipliation as an integer. -/
+def mul_exponent_assoc' (d₁ : Diagram n m) (d₂ : Diagram m k) (d₃ : Diagram k l) :
   PlanarRook.Monoid.mul_exponent' d₁ d₂ +
   PlanarRook.Monoid.mul_exponent' (d₁ * d₂) d₃ =
   PlanarRook.Monoid.mul_exponent' d₁ (d₂ * d₃) +
@@ -697,17 +660,14 @@ def mul_exponent_assoc' {n m k l : ℕ}
     rw[Diagram.mul_assoc]
     ring
 
-def mul_exponent_ge_zero {n m k : ℕ}
-  (d₁ : Diagram n m)
-  (d₂ : Diagram m k) :
+/-- The twist is non-negative. -/
+def mul_exponent_ge_zero (d₁ : Diagram n m) (d₂ : Diagram m k) :
   0 ≤ PlanarRook.Monoid.mul_exponent' d₁ d₂ := by
     rw [PlanarRook.Monoid.mul_exponent_is_stubs' d₁ d₂]
     simp
 
-def mul_exponent_assoc {n m k l : ℕ}
-  (d₁ : Diagram n m)
-  (d₂ : Diagram m k)
-  (d₃ : Diagram k l) :
+/-- The twist is additive over associated multiplication as a natural number. -/
+def mul_exponent_assoc (d₁ : Diagram n m) (d₂ : Diagram m k) (d₃ : Diagram k l) :
   Monoid.mul_exponent d₁ d₂ +
   Monoid.mul_exponent (d₁ * d₂) d₃ =
   PlanarRook.Monoid.mul_exponent d₁ (d₂ * d₃) +
@@ -749,21 +709,17 @@ def Diagram.ι_lr_bijection {n m : ℕ} (d : Diagram n m) :
 def Diagram.ι_mul {n m k : ℕ} (d₁ : Diagram n m) (d₂ : Diagram m k) :
   (d₁ * d₂).ι = d₂.ι * d₁.ι := by
     apply Diagram.ext
-    · simp only [hmul_left_defects]
-      simp only [ι]
+    · simp only [ι, hmul_right_defects, hmul_left_defects]
       ext x
+      simp only [Finset.mem_filter, Finset.mem_univ, true_and]
       constructor
       · intro h
-        simp only [hmul_right_defects, Finset.mem_filter, Finset.mem_univ, true_and] at h
         rcases h with ⟨ha, hb⟩
-        simp only [Finset.mem_filter, Finset.mem_univ, true_and]
         use ha
         rw [←Diagram.ι_lr_bijection] at hb
         exact hb
       · intro h
-        simp only [Finset.mem_filter, Finset.mem_univ, true_and] at h
         rcases h with ⟨ha, hb⟩
-        simp only [hmul_right_defects, Finset.mem_filter, Finset.mem_univ, true_and]
         use ha
         rw [←Diagram.ι_lr_bijection]
         exact hb
@@ -774,6 +730,7 @@ def Diagram.ι_of_iso {n m : ℕ}
   (s₁ : {S : Finset (Fin n) // S.card = k}) (s₂ : {S : Finset (Fin m) // S.card = k}) :
   Diagram.ι (Diagram.pi_iso.symm ⟨k, (s₁, s₂)⟩) = Diagram.pi_iso.symm ⟨k, (s₂, s₁)⟩ := by
     simp [Diagram.ι, Diagram.pi_iso]
+
 def Diagram.ι_of_iso₂ {n : ℕ}
   (k : Fin (n + 1))
   (s₁ : {S : Finset (Fin n) // S.card = k}) (s₂ : {S : Finset (Fin n) // S.card = k}) :
