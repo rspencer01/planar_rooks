@@ -566,7 +566,7 @@ components. The number of these is the exponent in the planar rook algebra's
 multiplication.
 -/
 def mul_exponent' (d₁ : Diagram n m) (d₂ : Diagram m k) : ℤ :=
-    m - d₁.through_index - d₂.through_index + (d₁ * d₂).through_index
+  m - d₁.through_index - d₂.through_index + (d₁ * d₂).through_index
 
 theorem mul_exponent_is_stubs' (d₁ : Diagram n m) (d₂ : Diagram m k) :
   PlanarRook.Monoid.mul_exponent' d₁ d₂ =
@@ -706,6 +706,7 @@ def Diagram.ι_lr_bijection {n m : ℕ} (d : Diagram n m) :
   d.ι.lr_bijection = d.lr_bijection.symm :=
      Subsingleton.elim _ _
 
+/-- The involution reverses the order of multiplication. -/
 def Diagram.ι_mul {n m k : ℕ} (d₁ : Diagram n m) (d₂ : Diagram m k) :
   (d₁ * d₂).ι = d₂.ι * d₁.ι := by
     apply Diagram.ext
@@ -724,6 +725,21 @@ def Diagram.ι_mul {n m k : ℕ} (d₁ : Diagram n m) (d₂ : Diagram m k) :
         rw [←Diagram.ι_lr_bijection]
         exact hb
     constructor
+
+/-- The involution preserves the through index. -/
+theorem Monoid.ι_through_index (d : Diagram n m) :
+  (Diagram.ι d).through_index = d.through_index := by
+    simp [Diagram.ι, Diagram.through_index, d.consistant]
+
+/-- The involution preserves the multiplication exponent. -/
+theorem Monoid.mul_exponent_of_ι (d₁ : Diagram n m) (d₂ : Diagram m k) :
+  Monoid.mul_exponent d₁ d₂ = Monoid.mul_exponent d₂.ι d₁.ι := by
+    simp only [Monoid.mul_exponent, Monoid.mul_exponent']
+    rw[←Diagram.ι_mul]
+    rw[Monoid.ι_through_index (d₁ * d₂)]
+    rw[Monoid.ι_through_index d₁]
+    rw[Monoid.ι_through_index d₂]
+    ring_nf
 
 def Diagram.ι_of_iso {n m : ℕ}
   (k : ℕ)

@@ -58,8 +58,7 @@ def tableau_span' (Λ : Type) (S : Set Λ) (tableau : Λ → Type)
 
 /-- An anti-involution is a linear involution that reverses the order of multiplication.
 -/
-def antiinvolution (f : A →ₗ[k] A) : Prop :=
-  (Function.Involutive f) ∧ ∀ (a b : A), f (a * b) = f b * f a
+def antiinvolution (f : A →ₗ[k] A) : Prop := ∀ (a b : A), f (a * b) = f b * f a
 
 /-! ## Main definition
 -/

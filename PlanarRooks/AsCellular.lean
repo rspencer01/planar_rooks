@@ -21,7 +21,12 @@ noncomputable instance : CellularAlgebra k (PlanarRookAlgebra n δ) where
   decidable_eq_tableau := by infer_instance
   inhabited_tableau := fun μ => ⟨(Finset.range μ).attachFin
     (fun m hm => lt_of_lt_of_le (Finset.mem_range.mp hm) (Nat.le_of_lt_succ μ.is_lt)), by simp⟩
-  c := Module.Basis.reindex (PlanarRookAlgebra.diagram_basis _) PlanarRook.Diagram.pi_iso₂
-  ι_antiinvolution := sorry
+  c := PlanarRookAlgebra.diagram_basis' δ
+  ι_antiinvolution := by
+    intro a b
+    have q := PlanarRookAlgebra.diagram_basis'_ι δ (n:= n)
+    rw [←PlanarRookAlgebra.foobar] at q
+    rw [←q]
+    exact PlanarRookAlgebra.ι_anti _ a b
   r := sorry
   multiplication_rule := sorry
