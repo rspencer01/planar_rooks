@@ -694,6 +694,18 @@ noncomputable instance diagram_basis' :
     k (PlanarRookAlgebra n δ) :=
     Module.Basis.reindex (PlanarRookAlgebra.diagram_basis _) PlanarRook.Diagram.pi_iso₂
 
+theorem diagram_basis'_mul (a b : Σ μ : Fin (n + 1), {S : Finset (Fin n) // S.card = μ} × {S : Finset (Fin n) // S.card = μ}) :
+  (diagram_basis' δ a) * (diagram_basis' δ b) =
+    (δ ^ PlanarRook.Monoid.mul_exponent
+      (PlanarRook.Diagram.pi_iso₂.invFun a)
+      (PlanarRook.Diagram.pi_iso₂.invFun b)) •
+    (diagram_basis' δ) (PlanarRook.Diagram.pi_iso₂.toFun (PlanarRook.Diagram.pi_iso₂.invFun a * PlanarRook.Diagram.pi_iso₂.invFun b)) := by
+    unfold diagram_basis'
+    rw [Module.Basis.reindex_apply]
+    rw [Module.Basis.reindex_apply]
+    rw [PlanarRookAlgebra.diagram_basis_mul]
+    simp
+
 /-! ## The algebra anti-involution
 -/
 noncomputable def ι {δ : k} : (PlanarRookAlgebra n δ) →ₗ[k] (PlanarRookAlgebra n δ) :=

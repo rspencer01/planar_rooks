@@ -354,6 +354,43 @@ def id_mul (d : Diagram n m) : (id n) * d = d := by
       simp [id]
     · simp [id]
 
+/-! ### Simple results about multiplication
+-/
+
+/-- The left defects of a product only depends on the left factor and the left defects of the
+right factor.
+-/
+def mul_left_of_right_arbitrary (d₁ : Diagram n m)
+  (s : Finset (Fin m)) (t u : Finset (Fin k)) (h₁ : s.card = t.card) (h₂ : s.card = u.card) :
+  (d₁ * (Diagram.mk s t h₁)).left_defects = (d₁ * (Diagram.mk s u h₂)).left_defects := by
+    rw[hmul_left_defects]
+    rw[hmul_left_defects]
+
+/-- The left defects of a product do not change if you only change the right defects of the
+right factor. -/
+def mul_left_of_right_arbitrary' (d₁ : Diagram n m) (d₂ d₃ : Diagram m k)
+  (h : d₂.left_defects = d₃.left_defects) : (d₁ * d₂).left_defects = (d₁ * d₃).left_defects := by
+    have h' : d₃ = Diagram.mk d₂.left_defects d₃.right_defects (by rw [h, d₃.consistant]) := by
+      apply Diagram.ext
+      · simp [h]
+      · simp
+    rw [h']
+    exact mul_left_of_right_arbitrary _ _ _ d₃.right_defects d₂.consistant (by rw[h, d₃.consistant])
+
+def mul_right_subset (d₁ : Diagram n m) (s : Finset (Fin m)) (t : Finset (Fin k))
+  (h : s.card = t.card) : (d₁ * (Diagram.mk s t h)).right_defects ⊆ t := by
+    intro x hx
+    simp only [hmul_right_defects, Finset.mem_filter, Finset.mem_univ, true_and] at hx
+    rcases hx with ⟨h₁, h₂⟩
+    exact h₁
+
+def mul_left_subset (d₁ : Diagram m k) (s : Finset (Fin n)) (t : Finset (Fin m))
+  (h : s.card = t.card) : ((Diagram.mk s t h) * d₁).left_defects ⊆ s := by
+    intro x hx
+    simp only [hmul_left_defects, Finset.mem_filter, Finset.mem_univ, true_and] at hx
+    rcases hx with ⟨h₁, h₂⟩
+    exact h₁
+
 /-! ### Lemmata for proving associativity of multiplication
 -/
 def restate_mul₂ (d₁ : Diagram n m) (d₂ : Diagram m k) (x : d₁.left_defects)
@@ -479,7 +516,7 @@ def restate_mul₅ {n m k : ℕ}
          rw [kk]
 /-! ### Associativity of multiplication
 -/
-def mul_assoc (d₁ : Diagram n m) (d₂ : Diagram m k) (d₃ : Diagram k l):
+def mul_assoc (d₁ : Diagram n m) (d₂ : Diagram m k) (d₃ : Diagram k l) :
   (d₁ * d₂) * d₃ = d₁ * (d₂ * d₃) := by
      apply Diagram.ext
      · rw[hmul_left_defects]
@@ -552,6 +589,22 @@ instance Monoid : Monoid (Diagram n n) := {
 namespace Monoid
 
 theorem one_def {n : ℕ} : (1 : Diagram n n) = Diagram.id n := by rfl
+
+/-! ## Through degree of multiplication
+-/
+
+/-- Multiplication does not increase the through degree of either diagram. -/
+theorem mul_not_increase_through_degree (d₁ : Diagram n m) (d₂ : Diagram m k) :
+  (d₁ * d₂).through_index ≤ min d₁.through_index d₂.through_index := by
+    unfold Diagram.through_index
+    simp only [le_inf_iff]
+    constructor
+    · apply Finset.card_le_card
+      exact Diagram.mul_left_subset _ _ _ _
+    · rw[PlanarRook.Diagram.consistant]
+      rw[PlanarRook.Diagram.consistant]
+      apply Finset.card_le_card
+      exact Diagram.mul_right_subset _ _ _ _
 
 /-! ## The twist factor in the monoid
 
@@ -678,6 +731,13 @@ def mul_exponent_assoc (d₁ : Diagram n m) (d₂ : Diagram m k) (d₃ : Diagram
     rw [←Int.toNat_add (PlanarRook.Monoid.mul_exponent_ge_zero _ _)
                        (PlanarRook.Monoid.mul_exponent_ge_zero _ _)]
     rw [PlanarRook.Monoid.mul_exponent_assoc']
+
+def mul_exponent_of_right_arbitrary (d₁ : Diagram n m)
+  (s : Finset (Fin m)) (t u : Finset (Fin k)) (h₁ : s.card = t.card) (h₂ : s.card = u.card) :
+  Monoid.mul_exponent d₁ (Diagram.mk s t h₁) = Monoid.mul_exponent d₁ (Diagram.mk s u h₂) := by
+    unfold mul_exponent
+    rw [mul_exponent_is_stubs']
+    rw [mul_exponent_is_stubs']
 
 end Monoid
 
