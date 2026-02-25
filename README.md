@@ -1,7 +1,11 @@
-# Planar Rook Algebras
+![](./docs/header.svg)
+
+<div style="text-align:center">
 
 [![Lean Action CI](https://github.com/rspencer01/planar_rooks/actions/workflows/lean_action_ci.yml/badge.svg)](https://github.com/rspencer01/planar_rooks/actions/workflows/lean_action_ci.yml)
 [![Documentation](https://img.shields.io/badge/documentation-github.io-blue)](https://rspencer01.github.io/planar_rooks/docs)
+
+</div>
 
 This repository contains a very rough and incredibly verbose attempt to derive a theory of the representation theory of Planar Rook Algebras.
 
@@ -27,15 +31,15 @@ This is an incomplete list of things that need to be done.
 
 #### Planar Rook Algebra
  * [x] Definition
- * [ ] The involution
+ * [x] The involution
  * [x] Independence on the parameter
 
 #### Cellular Algebras
- * [x] Defintions of cellular algebras 
+ * [x] Defintions of cellular algebras
  * [ ] Structure of cellular algebras
  * [ ] Statements of results in cellular algebras
 
 #### Representation theory of Planar Rook Algebras
- * [ ] Proof of cellularity
+ * [x] Proof of cellularity
  * [ ] Dimensions of cell modules
  * [ ] Irreducibility of cell modules if parameter doesn't vanish
