@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Robert A. Spencer
 -/
 import PlanarRooks.Diagrams
+import PlanarRooks.Finsupp
 import Mathlib.Data.Finsupp.Basic
 import Mathlib.Data.Finsupp.SMulWithZero
 import Mathlib.Data.Fintype.BigOperators
@@ -422,7 +423,6 @@ instance PlanarRookAlgebra.is_algebra (δ : k) :
       ext d₂
       rw [PlanarRook.Monoid.mul_exponent_eq_zero_of_id']
       simp
-      rw [PlanarRook.Diagram.id_mul]
     }
     conv => {
       rhs
@@ -430,7 +430,6 @@ instance PlanarRookAlgebra.is_algebra (δ : k) :
       ext d₁
       rw [PlanarRook.Monoid.mul_exponent_eq_zero_of_id]
       simp
-      rw [PlanarRook.Diagram.mul_id]
     }
   smul_def' := fun r x => by
     unfold PlanarRookAlgebra.single_one_ring_hom
@@ -465,7 +464,7 @@ theorem PlanarRookAlgebra.algebra_map :
   algebraMap k (PlanarRookAlgebra n δ) = PlanarRookAlgebra.single_one_ring_hom δ :=
   rfl
 
-/- The planar rook algebra is independent of the parameter δ, up to algebra isomorphism, as long as
+/-- The planar rook algebra is independent of the parameter δ, up to algebra isomorphism, as long as
 it is not zero.
 
 This is to say, there are only "two" planar rook algebras, the one where δ = 0 and the one where δ
@@ -477,16 +476,8 @@ def PlanarRookAlgebra.parameter_independence (n : ℕ) (δ₁ : k) (δ₁_nonzer
       invFun := fun y => ∑ d, PlanarRookAlgebra.single δ₁ d (y d / (δ₁^ (n - d.through_index)))
       left_inv := by
         intro x
-        simp only
-        conv => {
-          lhs
-          arg 2
-          intro x₁
-          arg 3
-          arg 1
-          rw [Finset.univ.sum_apply]
-          simp [PlanarRookAlgebra.single_apply]
-        }
+        simp only [Finset.univ.sum_apply, single_apply, Finset.sum_ite_eq, Finset.mem_univ,
+          ↓reduceIte]
         conv => {
           lhs
           arg 2
@@ -497,16 +488,8 @@ def PlanarRookAlgebra.parameter_independence (n : ℕ) (δ₁ : k) (δ₁_nonzer
         rw [←PlanarRookAlgebra.sum_single δ₁ x]
       right_inv := by
         intro x
-        simp only
-        conv => {
-          lhs
-          arg 2
-          intro x₁
-          arg 3
-          arg 1
-          rw [Finset.univ.sum_apply]
-          simp [PlanarRookAlgebra.single_apply]
-        }
+        simp only [Finset.univ.sum_apply, single_apply, Finset.sum_ite_eq, Finset.mem_univ,
+          ↓reduceIte]
         conv => {
           lhs
           arg 2
@@ -517,31 +500,12 @@ def PlanarRookAlgebra.parameter_independence (n : ℕ) (δ₁ : k) (δ₁_nonzer
         rw [←PlanarRookAlgebra.sum_single 1 x]
       map_mul' := by
         intro x y
-        rw [Finset.sum_mul_sum]
-        conv => {
-          rhs
-          arg 2
-          ext x₁
-          arg 2
-          ext x₂
-          rw [PlanarRookAlgebra.mul_single_single]
-          arg 3
-          ring_nf
-          arg 1
-          rw [mul_assoc]
-          arg 2
-          rw [←pow_add]
-          arg 2
-        }
+        simp only [Finset.sum_mul_sum, PlanarRookAlgebra.mul_single_single]
+        ring_nf
+        simp only [mul_assoc, ←pow_add]
         apply PlanarRookAlgebra.ext
         intro d
-        conv => {
-          lhs
-          rw [Finset.sum_apply d]
-          arg 2
-          ext x₁
-          rw [PlanarRookAlgebra.single_apply]
-        }
+        simp only [Finset.sum_apply d, PlanarRookAlgebra.single_apply]
         conv => {
           lhs
           rw [Finset.sum_ite_eq_of_mem (h:=Finset.mem_univ d)]
@@ -550,16 +514,6 @@ def PlanarRookAlgebra.parameter_independence (n : ℕ) (δ₁ : k) (δ₁_nonzer
           arg 2
           ext x₁
           rw [Finset.sum_mul]
-        }
-        conv => {
-          rhs
-          rw [Finset.sum_apply d]
-          arg 2
-          ext x₁
-          rw [Finset.sum_apply d]
-          arg 2
-          ext x₂
-          rw [PlanarRookAlgebra.single_apply]
         }
         apply Finset.sum_congr rfl
         intro x₁ hx₁
@@ -575,82 +529,37 @@ def PlanarRookAlgebra.parameter_independence (n : ℕ) (δ₁ : k) (δ₁_nonzer
             arg 2
             rw [←pow_add]
           }
+          simp only [mul_assoc, ←pow_add, PlanarRook.Monoid.mul_exponent]
           conv => {
             lhs
-            rw [mul_assoc]
             arg 2
-            rw [←pow_add]
             arg 2
-            unfold PlanarRook.Monoid.mul_exponent
             rw [←Int.toNat_sub _ _]
             rw [←Int.toNat_add (PlanarRook.Monoid.mul_exponent_ge_zero _ _)
                  (sub_nonneg_of_le (Int.ofNat_le.mpr (PlanarRook.Diagram.through_index_le_left _)))]
             unfold PlanarRook.Monoid.mul_exponent'
-            simp
-            rw [sub_add_comm]
+            simp [sub_add_comm]
             rw [Int.toNat_add (sub_nonneg_of_le
               (Int.ofNat_le.mpr (PlanarRook.Diagram.through_index_le_left _)))
                  (sub_nonneg_of_le (Int.ofNat_le.mpr (PlanarRook.Diagram.through_index_le_left _)))]
-            simp
-            rw [add_comm]
+            simp [add_comm]
           }
-        · simp only [h]
-          rw [eq_comm] at h
-          simp only [h]
-          simp
+        · simp [h, eq_comm]
       map_add' := by
         intro x y
-        conv => {
-          rhs
-          rw [←Finset.sum_add_distrib]
-        }
+        simp only [add_coeff, ← Finset.sum_add_distrib]
         apply Finset.sum_congr rfl
-        intro x₁  hx₁
-        rw [←PlanarRookAlgebra.add_single 1 x₁]
-        congr
-        rw [←add_mul]
-        simp
+        intro x₁ hx₁
+        rw [←PlanarRookAlgebra.add_single 1 x₁, ←add_mul]
       commutes' := by
         intro r
-        rw [PlanarRookAlgebra.algebra_map]
-        rw [PlanarRookAlgebra.algebra_map]
-        conv => {
-          lhs
-          arg 2
-          ext x
-          arg 3
-          simp
-          unfold single_one_ring_hom
-          simp
-          rw [PlanarRookAlgebra.one_is]
-          rw [PlanarRookAlgebra.smul_single δ₁]
-          rw [PlanarRookAlgebra.single_apply]
-          simp
-        }
+        simp only [algebra_map, single_one_ring_hom, one_is,
+          RingHom.coe_mk, MonoidHom.coe_mk, OneHom.coe_mk]
         ext x
-        conv => {
-          lhs
-          rw [Finset.univ.sum_apply x]
-          arg 2
-          ext c
-          rw [PlanarRookAlgebra.single_apply]
-        }
-        simp only [Finset.univ.sum_ite_eq, Finset.mem_univ, ↓reduceIte]
-        conv => {
-          rhs
-          simp
-          unfold single_one_ring_hom
-          simp
-          rw [PlanarRookAlgebra.one_is]
-          rw [PlanarRookAlgebra.smul_single 1]
-          rw [PlanarRookAlgebra.single_apply]
-          simp
-        }
+        simp [Finset.univ.sum_apply x, PlanarRookAlgebra.single_apply]
         by_cases h : x = (PlanarRook.Diagram.id n)
-        · simp only [h, ↓reduceIte]
-          rw [PlanarRook.Diagram.through_index_of_id]
-          simp
-        · simp only [h, ↓reduceIte]
+        · simp [h, PlanarRook.Diagram.through_index_of_id]
+        · simp [h]
     }
 
 instance PlanarRookAlgebra.ringConGen : Ring (PlanarRookAlgebra n δ) := {
@@ -658,22 +567,27 @@ instance PlanarRookAlgebra.ringConGen : Ring (PlanarRookAlgebra n δ) := {
   PlanarRookAlgebra.addGroupWithOne _ with
 }
 
-noncomputable instance PlanarRookAlgebra.diagram_basis :
+variable [DecidableEq k]
+
+/-- The obvious `k` basis of the `PlanarRookAlgebra` is the diagram basis.
+
+In fact, this is how it is naturally defined, as the maps from diagrams to the underlying ring.
+However, the "basis" also requires some assurances about finiteness that we provide explicitly
+in this instance.
+
+Note: This could probably be made more general for arbitrary fintypes.
+-/
+instance PlanarRookAlgebra.diagram_basis :
   Module.Basis (PlanarRook.Diagram n n) k (PlanarRookAlgebra n δ) := {
     repr := {
-      toFun := Finsupp.equivFunOnFinite.symm
-      map_add' := by
-        intro x y
+      toFun := equivFunOnFinite.symm
+      invFun := equivFunOnFinite.toFun
+      map_add' := fun x y => by
         ext d
-        simp
-      map_smul' := by
-        intro m x
-        ext d
-        simp_all only [Finsupp.equivFunOnFinite_symm_apply_toFun,
-          RingHom.id_apply, Finsupp.coe_smul, Finsupp.coe_equivFunOnFinite_symm,
-          Pi.smul_apply, smul_eq_mul]
         rfl
-      invFun := Finsupp.equivFunOnFinite.toFun
+      map_smul' := fun m x => by
+        ext d
+        rfl
     }
   }
 
@@ -688,23 +602,24 @@ theorem PlanarRookAlgebra.diagram_basis_mul (a b : PlanarRook.Diagram n n) :
     simp[q]
 
 namespace PlanarRookAlgebra
-noncomputable instance diagram_basis' :
+
+instance diagram_basis' :
   Module.Basis
     (Σ μ : Fin (n + 1), {S : Finset (Fin n) // S.card = μ} × {S : Finset (Fin n) // S.card = μ})
     k (PlanarRookAlgebra n δ) :=
     Module.Basis.reindex (PlanarRookAlgebra.diagram_basis _) PlanarRook.Diagram.pi_iso₂
 
-theorem diagram_basis'_mul (a b : Σ μ : Fin (n + 1), {S : Finset (Fin n) // S.card = μ} × {S : Finset (Fin n) // S.card = μ}) :
+theorem diagram_basis'_mul
+  (a b : Σ μ : Fin (n + 1), {S : Finset (Fin n) // S.card = μ} × {S : Finset (Fin n) // S.card = μ})
+  :
   (diagram_basis' δ a) * (diagram_basis' δ b) =
     (δ ^ PlanarRook.Monoid.mul_exponent
       (PlanarRook.Diagram.pi_iso₂.invFun a)
       (PlanarRook.Diagram.pi_iso₂.invFun b)) •
-    (diagram_basis' δ) (PlanarRook.Diagram.pi_iso₂.toFun (PlanarRook.Diagram.pi_iso₂.invFun a * PlanarRook.Diagram.pi_iso₂.invFun b)) := by
+    (diagram_basis' δ) (PlanarRook.Diagram.pi_iso₂.toFun
+      (PlanarRook.Diagram.pi_iso₂.invFun a * PlanarRook.Diagram.pi_iso₂.invFun b)) := by
     unfold diagram_basis'
-    rw [Module.Basis.reindex_apply]
-    rw [Module.Basis.reindex_apply]
-    rw [PlanarRookAlgebra.diagram_basis_mul]
-    simp
+    simp [Module.Basis.reindex_apply, PlanarRookAlgebra.diagram_basis_mul]
 
 /-! ## The algebra anti-involution
 -/
@@ -715,7 +630,6 @@ def diagram_basis_swap :
   (Σ μ : Fin (n + 1), {S : Finset (Fin n) // S.card = μ} × {S : Finset (Fin n) // S.card = μ}) →
   (Σ μ : Fin (n + 1), {S : Finset (Fin n) // S.card = μ} × {S : Finset (Fin n) // S.card = μ}) :=
   fun ⟨i, S, T⟩ => ⟨i, T, S⟩
-
 
 theorem diagram_basis'_ι : ι (n:=n) =
   (diagram_basis' δ).constr k ((diagram_basis' δ) ∘ diagram_basis_swap) := by

@@ -73,6 +73,7 @@ by
   rfl
 
 namespace Diagram
+
 -- NOTE: I'm not sure - this might have been a better definition of a diagram:
 def pi_iso :  Diagram n m ≃
   (Σ k, ({S : Finset (Fin n) // S.card = k} × {S : Finset (Fin m) // S.card = k})) := {
@@ -80,11 +81,11 @@ def pi_iso :  Diagram n m ≃
                      ⟨d.left_defects, rfl⟩,
                      ⟨d.right_defects, eq_comm.mpr d.consistant⟩⟩,
   invFun := fun ⟨h, ⟨l, hl⟩, ⟨r, hr⟩⟩ => Diagram.mk l r (by rw [hl, hr]),
-  left_inv := fun d => by simp
+  left_inv := fun d => by simp only
   right_inv := fun ⟨h, ⟨l, hl⟩, ⟨r, hr⟩⟩ => by
-    simp[hl]
+    simp only [Sigma.mk.injEq, hl, true_and]
     cases hl
-    simp
+    simp only [heq_eq_eq]
 }
 
 def pi_iso' :
@@ -168,9 +169,7 @@ def through_index_of_iso (k : ℕ)
     simp [through_index, Diagram.pi_iso, s₁.property]
 
 theorem through_index_eq_right (d : Diagram n m) :
-  d.through_index = d.right_defects.card := by
-    rw [←d.consistant]
-    rfl
+  d.through_index = d.right_defects.card := d.consistant
 
 /-- Through indices are bounded by the size of the left defects. -/
 theorem through_index_le_left (d : Diagram n m) :
@@ -183,9 +182,7 @@ theorem through_index_le_left (d : Diagram n m) :
     exact Finset.card_le_univ _
 
 /-- Through indices are bounded by the size of the right defects. -/
-theorem through_index_le_right {n m : ℕ}
-  (d : Diagram n m) :
-  d.through_index ≤ m := by
+theorem through_index_le_right (d : Diagram n m) : d.through_index ≤ m := by
     rw [through_index, d.consistant]
     conv => {
       rhs
@@ -193,31 +190,23 @@ theorem through_index_le_right {n m : ℕ}
     }
     exact Finset.card_le_univ _
 
-theorem through_index_of_id {n : ℕ} : (id n).through_index = n := by
-    simp [through_index, id]
+theorem through_index_of_id : (id n).through_index = n := by simp [through_index, id]
 
-theorem through_index_of_empty {n m : ℕ} : (empty n m).through_index = 0 := by
-    simp [through_index, empty]
+theorem through_index_of_empty : (empty n m).through_index = 0 := by simp [through_index, empty]
 
 /-! ## Diagrams as partial bijections
 -/
 
 /-- A diagram defines a bijection between left and right defects -/
-def lr_bijection {n m : ℕ}
-  (d : Diagram n m) :
-  d.left_defects ≃o d.right_defects :=
+def bijection (d : Diagram n m) : d.left_defects ≃o d.right_defects :=
     (unique_finite_orderiso d.consistant).default
 
 @[simp]
-def lr_bijection_of_id_is_id {n : ℕ} : (id n).lr_bijection = OrderIso.refl _ :=
+def bijection_of_id_is_id {n : ℕ} : (id n).bijection = OrderIso.refl _ :=
   Subsingleton.elim _ _
 
-def of_lr_bijection {n m : ℕ}
-  (left_defects : Finset (Fin n))
-  (right_defects : Finset (Fin m))
-  (bijection : left_defects ≃o right_defects) :
-  Diagram n m :=
-  {
+def of_bijection (left_defects : Finset (Fin n)) (right_defects : Finset (Fin m))
+  (bijection : left_defects ≃o right_defects) : Diagram n m := {
     left_defects := left_defects,
     right_defects := right_defects,
     consistant := equal_size_of_orderiso bijection
@@ -225,30 +214,30 @@ def of_lr_bijection {n m : ℕ}
 
 /- The bijection of a diagram is the one we started with if we construct a diagram from a bijection.
 -/
-def lr_bijection_of_lr_bijection {n m : ℕ} (d : Diagram n m) :
-  Diagram.of_lr_bijection d.left_defects d.right_defects d.lr_bijection = d := by
-    rw [Diagram.of_lr_bijection]
+def bijection_of_bijection {n m : ℕ} (d : Diagram n m) :
+  Diagram.of_bijection d.left_defects d.right_defects d.bijection = d := by
+    rw [Diagram.of_bijection]
 
 /- The bijection of a diagram constructed from a bijection is the original bijection.
 -/
-def lr_bijection_of_of_lr_bijection {n m : ℕ}
+def bijection_of_of_bijection {n m : ℕ}
   (left_defects : Finset (Fin n))
   (right_defects : Finset (Fin m))
   (bijection : left_defects ≃o right_defects) :
-  (Diagram.of_lr_bijection left_defects right_defects bijection).lr_bijection = bijection :=
+  (Diagram.of_bijection left_defects right_defects bijection).bijection = bijection :=
     Subsingleton.elim _ bijection
 
-def lr_bijections_are_diagrams {n m : ℕ} :
+def bijections_are_diagrams {n m : ℕ} :
   Diagram n m ≃ (Σ (left_defects : Finset (Fin n)) (right_defects : Finset (Fin m)),
     left_defects ≃o right_defects) := {
     invFun := fun ⟨left_defects, right_defects, bijection⟩ =>
-      Diagram.of_lr_bijection left_defects right_defects bijection,
-    toFun := fun d => ⟨d.left_defects, d.right_defects, d.lr_bijection⟩
+      Diagram.of_bijection left_defects right_defects bijection,
+    toFun := fun d => ⟨d.left_defects, d.right_defects, d.bijection⟩
     right_inv := fun d => by
-      simp only [of_lr_bijection]
+      simp only [of_bijection]
       apply congr_arg
       apply congr_arg
-      exact lr_bijection_of_of_lr_bijection d.fst d.2.fst d.2.snd
+      exact bijection_of_of_bijection d.fst d.2.fst d.2.snd
   }
 
 /- Diagrams act on Fin n by sending left defects to their
@@ -257,14 +246,14 @@ corresponding right defect, and undefined elsewhere.
 def act {n m : ℕ} (d : Diagram n m) (i : Fin n) :
   Option (Fin m) :=
   if h : i ∈ d.left_defects then
-    some (d.lr_bijection ⟨i, h⟩)
+    some (d.bijection ⟨i, h⟩)
   else
     none
 
 /- The action of the identity diagram is the identity function
 -/
 def act_of_id {n : ℕ} (i : Fin n) : act (id n) i = some i := by
-  simp [act, lr_bijection_of_id_is_id]
+  simp [act, bijection_of_id_is_id]
   simp [id]
 
 /- The action of the empty diagram is nowhere defined
@@ -277,57 +266,33 @@ def act_of_empty {n m : ℕ} (i : Fin n) : act (empty n m) i = none := rfl
 def mul {n m k : ℕ} (d₁ : Diagram n m) (d₂ : Diagram m k) :
   Diagram n k := {
     left_defects :=
-      { x | ∃ (h : x ∈ d₁.left_defects), ↑(d₁.lr_bijection ⟨x, h⟩) ∈ d₂.left_defects},
+      { x | ∃ (h : x ∈ d₁.left_defects), ↑(d₁.bijection ⟨x, h⟩) ∈ d₂.left_defects},
     right_defects :=
-      { y | ∃ (h : y ∈ d₂.right_defects), ↑(d₂.lr_bijection.symm ⟨y, h⟩) ∈ d₁.right_defects},
+      { y | ∃ (h : y ∈ d₂.right_defects), ↑(d₂.bijection.symm ⟨y, h⟩) ∈ d₁.right_defects},
     consistant := by
-      let fi {n m k : ℕ}
-        (d₁ : Diagram n m)
-        (d₂ : Diagram m k) :
-          ({x | ∃ (h : x ∈ d₁.left_defects),
-                ↑(d₁.lr_bijection ⟨x, h⟩) ∈ d₂.left_defects} : Finset (Fin n)) →
+      let f : ({x | ∃ (h : x ∈ d₁.left_defects), ↑(d₁.bijection ⟨x, h⟩) ∈ d₂.left_defects}
+        : Finset (Fin n)) →
           { y | ∃ (h : y ∈ d₂.right_defects),
-                ↑(d₂.lr_bijection.symm ⟨y, h⟩) ∈ d₁.right_defects } := fun ⟨x, hx⟩ =>
-              ⟨↑(d₂.lr_bijection.toFun ⟨d₁.lr_bijection.toFun ⟨x , by
-                simp at hx
-                exact hx.choose
-              ⟩, by
-                simp at hx
-                exact hx.choose_spec
-              ⟩ ) , by
-                simp
-            ⟩
-      let fj {n m k : ℕ}
-        (d₁ : Diagram n m)
-        (d₂ : Diagram m k) :
-          ({ y | ∃ (h : y ∈ d₂.right_defects),
-              ↑(d₂.lr_bijection.symm ⟨y, h⟩) ∈ d₁.right_defects } : Finset (Fin k)) →
-          {x | ∃ (h : x ∈ d₁.left_defects),
-              ↑(d₁.lr_bijection ⟨x, h⟩) ∈ d₂.left_defects} := fun ⟨y, hy⟩ =>
-              ⟨↑(d₁.lr_bijection.invFun ⟨↑(d₂.lr_bijection.invFun ⟨y, by
-                simp at hy
-                exact hy.choose
-              ⟩), by
-                simp at hy
-                exact hy.choose_spec
-              ⟩ ) , by
-                simp
-            ⟩
+                ↑(d₂.bijection.symm ⟨y, h⟩) ∈ d₁.right_defects } := fun ⟨x, hx⟩ =>
+              ⟨↑(d₂.bijection ⟨d₁.bijection ⟨x, (Finset.mem_filter.mp hx).2.choose⟩,
+                        (Finset.mem_filter.mp hx).2.choose_spec⟩ ) , by simp⟩
+      let g : ({ y | ∃ (h : y ∈ d₂.right_defects), ↑(d₂.bijection.symm ⟨y, h⟩) ∈ d₁.right_defects}
+          : Finset (Fin k)) →
+          {x | ∃ (h : x ∈ d₁.left_defects), ↑(d₁.bijection ⟨x, h⟩) ∈ d₂.left_defects} :=
+          fun ⟨y, hy⟩ =>
+              ⟨↑(d₁.bijection.symm ⟨↑(d₂.bijection.symm ⟨y, (Finset.mem_filter.mp hy).2.choose⟩),
+              (Finset.mem_filter.mp hy).2.choose_spec⟩ ), by simp⟩
       apply Finset.card_bij'
-        (s := ({x | ∃ (h : x ∈ d₁.left_defects), ↑(d₁.lr_bijection ⟨x, h⟩) ∈ d₂.left_defects}
+        (s := ({x | ∃ (h : x ∈ d₁.left_defects), ↑(d₁.bijection ⟨x, h⟩) ∈ d₂.left_defects}
                  : Finset (Fin n)))
-        (t := ({y | ∃ (h : y ∈ d₂.right_defects), ↑(d₂.lr_bijection.symm ⟨y, h⟩) ∈ d₁.right_defects}
+        (t := ({y | ∃ (h : y ∈ d₂.right_defects), ↑(d₂.bijection.symm ⟨y, h⟩) ∈ d₁.right_defects}
                  : Finset (Fin k)))
-        (i := fun x hx => fi d₁ d₂ ⟨x, hx⟩)
-        (j := fun y hy => fj d₁ d₂ ⟨y, hy⟩)
-      · intro a ha
-        simp [fi, fj]
-      · intro a ha
-        simp [fi, fj]
-      · intro a ha
-        simp [fi]
-      · intro a ha
-        simp [fj]
+        (i := fun x hx => f ⟨x, hx⟩)
+        (j := fun y hy => g ⟨y, hy⟩)
+        (left_inv := fun a ha => by simp[f, g])
+        (right_inv := fun a ha => by simp[f, g])
+      · simp [f]
+      · simp [g]
   }
 
 instance has_hmul : HMul (Diagram n m) (Diagram m k) (Diagram n k) := ⟨mul⟩
@@ -335,19 +300,21 @@ instance has_hmul : HMul (Diagram n m) (Diagram m k) (Diagram n k) := ⟨mul⟩
 @[simp]
 def hmul_left_defects (d₁ : Diagram n m) (d₂ : Diagram m k) :
   (d₁ * d₂).left_defects = ({ x | ∃ (h : x ∈ d₁.left_defects),
-           ↑(d₁.lr_bijection ⟨x, h⟩) ∈ d₂.left_defects } : Finset (Fin n)) := rfl
+           ↑(d₁.bijection ⟨x, h⟩) ∈ d₂.left_defects } : Finset (Fin n)) := rfl
 
 @[simp]
 def hmul_right_defects (d₁ : Diagram n m) (d₂ : Diagram m k) :
   (d₁ * d₂).right_defects = ({ y | ∃ (h : y ∈ d₂.right_defects),
-           ↑(d₂.lr_bijection.symm ⟨y, h⟩) ∈ d₁.right_defects } : Finset (Fin k)) := rfl
+           ↑(d₂.bijection.symm ⟨y, h⟩) ∈ d₁.right_defects } : Finset (Fin k)) := rfl
 
+@[simp]
 def mul_id (d : Diagram n m) : d * (id m) = d := by
     apply Diagram.ext
     · simp [id]
     · simp
       simp [id]
 
+@[simp]
 def id_mul (d : Diagram n m) : (id n) * d = d := by
     apply Diagram.ext
     · simp
@@ -357,48 +324,32 @@ def id_mul (d : Diagram n m) : (id n) * d = d := by
 /-! ### Simple results about multiplication
 -/
 
-/-- The left defects of a product only depends on the left factor and the left defects of the
-right factor.
--/
-def mul_left_of_right_arbitrary (d₁ : Diagram n m)
-  (s : Finset (Fin m)) (t u : Finset (Fin k)) (h₁ : s.card = t.card) (h₂ : s.card = u.card) :
-  (d₁ * (Diagram.mk s t h₁)).left_defects = (d₁ * (Diagram.mk s u h₂)).left_defects := by
-    rw[hmul_left_defects]
-    rw[hmul_left_defects]
-
 /-- The left defects of a product do not change if you only change the right defects of the
 right factor. -/
-def mul_left_of_right_arbitrary' (d₁ : Diagram n m) (d₂ d₃ : Diagram m k)
+def mul_left_of_right_arbitrary {d₁ : Diagram n m} (d₂ d₃ : Diagram m k)
   (h : d₂.left_defects = d₃.left_defects) : (d₁ * d₂).left_defects = (d₁ * d₃).left_defects := by
-    have h' : d₃ = Diagram.mk d₂.left_defects d₃.right_defects (by rw [h, d₃.consistant]) := by
-      apply Diagram.ext
-      · simp [h]
-      · simp
-    rw [h']
-    exact mul_left_of_right_arbitrary _ _ _ d₃.right_defects d₂.consistant (by rw[h, d₃.consistant])
+    simp [h]
 
-def mul_right_subset (d₁ : Diagram n m) (s : Finset (Fin m)) (t : Finset (Fin k))
-  (h : s.card = t.card) : (d₁ * (Diagram.mk s t h)).right_defects ⊆ t := by
+def mul_right_subset (d₁ : Diagram n m) (d₂ : Diagram m k) :
+  (d₁ * d₂).right_defects ⊆ d₂.right_defects := by
     intro x hx
     simp only [hmul_right_defects, Finset.mem_filter, Finset.mem_univ, true_and] at hx
-    rcases hx with ⟨h₁, h₂⟩
-    exact h₁
+    exact hx.choose
 
-def mul_left_subset (d₁ : Diagram m k) (s : Finset (Fin n)) (t : Finset (Fin m))
-  (h : s.card = t.card) : ((Diagram.mk s t h) * d₁).left_defects ⊆ s := by
+def mul_left_subset (d₁ : Diagram n m) (d₂ : Diagram m k) :
+  (d₁ * d₂).left_defects ⊆ d₁.left_defects := by
     intro x hx
     simp only [hmul_left_defects, Finset.mem_filter, Finset.mem_univ, true_and] at hx
-    rcases hx with ⟨h₁, h₂⟩
-    exact h₁
+    exact hx.choose
 
 def through_index_of_mul_independent_of_right (d₁ : Diagram n m) (d₂ d₃ : Diagram m k)
   (h : d₂.left_defects = d₃.left_defects) : (d₁ * d₂).through_index = (d₁ * d₃).through_index := by
-    rw [through_index, through_index, mul_left_of_right_arbitrary' d₁ d₂ d₃ h]
+    rw [through_index, through_index, mul_left_of_right_arbitrary d₂ d₃ h]
 
 /-! ### Lemmata for proving associativity of multiplication
 -/
 def restate_mul₂ (d₁ : Diagram n m) (d₂ : Diagram m k) (x : d₁.left_defects)
-  (hx : ∃ (y : Fin m), d₁.lr_bijection x = y ∧ y ∈ d₂.left_defects) :
+  (hx : ∃ (y : Fin m), d₁.bijection x = y ∧ y ∈ d₂.left_defects) :
     x.val ∈ (d₁ * d₂).left_defects := by
       simp only [hmul_left_defects, Finset.mem_filter, Finset.mem_univ, true_and]
       rcases hx with ⟨y, hy⟩
@@ -408,37 +359,26 @@ def restate_mul₂ (d₁ : Diagram n m) (d₂ : Diagram m k) (x : d₁.left_defe
 
 def restate_mul₃ (d₁ : Diagram n m) (d₂ : Diagram m k) (x : d₁.left_defects)
   (y : Fin m)
-  (hx : d₁.lr_bijection x = y ∧ y ∈ d₂.left_defects) :
-    ((d₁ * d₂).lr_bijection ⟨x, Diagram.restate_mul₂ d₁ d₂ x ⟨y, hx⟩⟩)
-     = (⟨d₂.lr_bijection ⟨y, hx.2⟩, by
+  (hx : d₁.bijection x = y ∧ y ∈ d₂.left_defects) :
+    ((d₁ * d₂).bijection ⟨x, Diagram.restate_mul₂ d₁ d₂ x ⟨y, hx⟩⟩)
+     = (⟨d₂.bijection ⟨y, hx.2⟩, by
          simp only [hmul_right_defects, Finset.mem_filter, Finset.mem_univ, Subtype.coe_eta,
            OrderIso.symm_apply_apply, SetLike.coe_mem, exists_const, true_and]
          rw[←hx.1]
          simp only [SetLike.coe_mem]
       ⟩ : (d₁ * d₂).right_defects) := by
        rcases hx with ⟨hx₁, hx₂⟩
-       conv => {
-         rhs
-         arg 1
-         arg 1
-         arg 2
-         arg 1
-         rw [←hx₁]
-       }
+       simp only [← hx₁]
        have xd₁d₂ : ↑x ∈ (d₁ * d₂).left_defects := by simp [hx₁, hx₂, x.prop]
-       let f := (d₁ * d₂).lr_bijection
+       let f := (d₁ * d₂).bijection
        let g : ↥(d₁ * d₂).left_defects ≃o ↥(d₁ * d₂).right_defects := {
-          toFun := fun ⟨x, hx⟩ => ⟨d₂.lr_bijection ⟨d₁.lr_bijection ⟨x, by
-            simp at hx
-            exact hx.choose
-          ⟩, by
+          toFun := fun ⟨x, hx⟩ => ⟨d₂.bijection ⟨d₁.bijection
+            ⟨x, Finset.mem_of_subset (mul_left_subset _ _) hx⟩, by
             simp at hx
             exact hx.choose_spec
           ⟩, by simp⟩
-          invFun := fun ⟨y, hy⟩ => ⟨d₁.lr_bijection.symm ⟨d₂.lr_bijection.symm ⟨y, by
-            simp at hy
-            exact hy.choose
-          ⟩, by
+          invFun := fun ⟨y, hy⟩ => ⟨d₁.bijection.symm
+            ⟨d₂.bijection.symm ⟨y, Finset.mem_of_subset (mul_right_subset _ _) hy⟩, by
             simp at hy
             exact hy.choose_spec
           ⟩, by simp⟩
@@ -446,9 +386,9 @@ def restate_mul₃ (d₁ : Diagram n m) (d₂ : Diagram m k) (x : d₁.left_defe
           left_inv := fun h => by simp
           right_inv := fun h => by simp
        }
-       have kk : ↑((d₁ * d₂).lr_bijection ⟨x, xd₁d₂⟩) = f ⟨x, xd₁d₂⟩ := rfl
+       have kk : ↑((d₁ * d₂).bijection ⟨x, xd₁d₂⟩) = f ⟨x, xd₁d₂⟩ := rfl
        rw [kk]
-       have kk : ⟨d₂.lr_bijection ⟨↑(d₁.lr_bijection x), by
+       have kk : ⟨d₂.bijection ⟨↑(d₁.bijection x), by
          rw [hx₁]
          exact hx₂
          ⟩, by simp ⟩ = g ⟨x, xd₁d₂⟩ := rfl
@@ -458,7 +398,7 @@ def restate_mul₃ (d₁ : Diagram n m) (d₂ : Diagram m k) (x : d₁.left_defe
 
 def restate_mul₄ (d₁ : Diagram n m) (d₂ : Diagram m k) (x : d₂.right_defects)
   (y : Fin m)
-  (hx : d₂.lr_bijection.symm x = y ∧ y ∈ d₁.right_defects) :
+  (hx : d₂.bijection.symm x = y ∧ y ∈ d₁.right_defects) :
     x.val ∈ (d₁ * d₂).right_defects := by
       simp only [hmul_right_defects, Finset.mem_filter, Finset.mem_univ, true_and]
       rcases hx with ⟨y, hy⟩
@@ -471,37 +411,26 @@ def restate_mul₅ {n m k : ℕ}
   (d₂ : Diagram m k)
   (x : d₂.right_defects)
   (y : Fin m)
-  (hx : d₂.lr_bijection.symm x = y ∧ y ∈ d₁.right_defects) :
-    ((d₁ * d₂).lr_bijection.symm ⟨x, Diagram.restate_mul₄ d₁ d₂ x y hx⟩)
-     = (⟨d₁.lr_bijection.symm ⟨y, hx.2⟩, by
+  (hx : d₂.bijection.symm x = y ∧ y ∈ d₁.right_defects) :
+    ((d₁ * d₂).bijection.symm ⟨x, Diagram.restate_mul₄ d₁ d₂ x y hx⟩)
+     = (⟨d₁.bijection.symm ⟨y, hx.2⟩, by
        simp only [hmul_left_defects, Finset.mem_filter, Finset.mem_univ, Subtype.coe_eta,
          OrderIso.apply_symm_apply, SetLike.coe_mem, exists_const, true_and]
        rw [←hx.1]
        simp
        ⟩ : (d₁ * d₂).left_defects) := by
          rcases hx with ⟨hx₁, hx₂⟩
-         conv => {
-          rhs
-          arg 1
-          arg 1
-          arg 2
-          arg 1
-          rw [←hx₁]
-         }
+         simp only [←hx₁]
          have xd₁d₂ : ↑x ∈ (d₁ * d₂).right_defects := by simp [hx₁, hx₂, x.prop]
-         let f := (d₁ * d₂).lr_bijection.symm
+         let f := (d₁ * d₂).bijection.symm
          let g : ↥(d₁ * d₂).right_defects ≃o ↥(d₁ * d₂).left_defects := {
-            toFun := fun ⟨y, hy⟩ => ⟨d₁.lr_bijection.symm ⟨d₂.lr_bijection.symm ⟨y, by
-              simp at hy
-              exact hy.choose
-            ⟩, by
+            toFun := fun ⟨y, hy⟩ => ⟨d₁.bijection.symm
+              ⟨d₂.bijection.symm ⟨y, Finset.mem_of_subset (mul_right_subset _ _) hy⟩, by
               simp at hy
               exact hy.choose_spec
             ⟩, by simp⟩
-            invFun := fun ⟨x, hx⟩ => ⟨d₂.lr_bijection.toFun ⟨d₁.lr_bijection.toFun ⟨x, by
-              simp at hx
-              exact hx.choose
-            ⟩, by
+            invFun := fun ⟨x, hx⟩ => ⟨d₂.bijection.toFun ⟨d₁.bijection.toFun
+              ⟨x, Finset.mem_of_subset (mul_left_subset _ _) hx⟩, by
               simp at hx
               exact hx.choose_spec
             ⟩, by simp⟩
@@ -509,15 +438,16 @@ def restate_mul₅ {n m k : ℕ}
             left_inv := fun h => by simp
             right_inv := fun h => by simp
          }
-         have kk : ↑((d₁ * d₂).lr_bijection.symm ⟨x, xd₁d₂⟩) = f ⟨x, xd₁d₂⟩ := rfl
+         have kk : ↑((d₁ * d₂).bijection.symm ⟨x, xd₁d₂⟩) = f ⟨x, xd₁d₂⟩ := rfl
          rw [kk]
-         have kk : ⟨↑(d₁.lr_bijection.symm ⟨↑(d₂.lr_bijection.symm x), by
+         have kk : ⟨↑(d₁.bijection.symm ⟨↑(d₂.bijection.symm x), by
            rw [hx₁]
            exact hx₂
            ⟩), by simp⟩ = g ⟨x, xd₁d₂⟩ := rfl
          rw [kk]
          have kk : f = g := by rw [Subsingleton.elim f]
          rw [kk]
+
 /-! ### Associativity of multiplication
 -/
 def mul_assoc (d₁ : Diagram n m) (d₂ : Diagram m k) (d₃ : Diagram k l) :
@@ -534,7 +464,7 @@ def mul_assoc (d₁ : Diagram n m) (d₂ : Diagram m k) (d₃ : Diagram k l) :
          rcases ha with ⟨hc, hd⟩
          use hc
          use hd
-         have kk:= Diagram.restate_mul₃ d₁ d₂ ⟨x, hc⟩ (d₁.lr_bijection ⟨x, hc⟩) ⟨rfl, hd⟩
+         have kk:= Diagram.restate_mul₃ d₁ d₂ ⟨x, hc⟩ (d₁.bijection ⟨x, hc⟩) ⟨rfl, hd⟩
          rw [kk] at hb
          exact hb
        · intro h
@@ -543,7 +473,7 @@ def mul_assoc (d₁ : Diagram n m) (d₂ : Diagram m k) (d₃ : Diagram k l) :
          rcases h with ⟨ha, hb⟩
          rcases hb with ⟨hc, hd⟩
          constructor
-         · have kk := Diagram.restate_mul₃ d₁ d₂ ⟨x, ha⟩ (d₁.lr_bijection ⟨x, ha⟩) ⟨rfl, hc⟩
+         · have kk := Diagram.restate_mul₃ d₁ d₂ ⟨x, ha⟩ (d₁.bijection ⟨x, ha⟩) ⟨rfl, hc⟩
            rw [kk]
            exact hd
      · rw[hmul_right_defects]
@@ -553,7 +483,7 @@ def mul_assoc (d₁ : Diagram n m) (d₂ : Diagram m k) (d₃ : Diagram k l) :
          hmul_left_defects, forall_exists_index]
          intro h ha hb
          use ⟨h, ha⟩
-         have kk := Diagram.restate_mul₅ d₂ d₃ ⟨x, h⟩ (d₃.lr_bijection.symm ⟨x, h⟩) ⟨rfl, ha⟩
+         have kk := Diagram.restate_mul₅ d₂ d₃ ⟨x, h⟩ (d₃.bijection.symm ⟨x, h⟩) ⟨rfl, ha⟩
          have kk₂ := SetCoe.ext_iff.mpr kk
          simp only [hmul_left_defects, hmul_right_defects] at kk₂
          rw [←kk₂] at hb
@@ -567,7 +497,7 @@ def mul_assoc (d₁ : Diagram n m) (d₂ : Diagram m k) (d₃ : Diagram k l) :
          use hc
          simp only [hmul_right_defects, Finset.mem_filter, Finset.mem_univ, true_and]
          use hd
-         have kk := Diagram.restate_mul₅ d₂ d₃ ⟨x, hc⟩ (d₃.lr_bijection.symm ⟨x, hc⟩)
+         have kk := Diagram.restate_mul₅ d₂ d₃ ⟨x, hc⟩ (d₃.bijection.symm ⟨x, hc⟩)
            ⟨rfl, hd⟩
          have kk₂ := SetCoe.ext_iff.mpr kk
          simp only [hmul_left_defects, hmul_right_defects] at kk₂
@@ -604,11 +534,11 @@ theorem mul_not_increase_through_degree (d₁ : Diagram n m) (d₂ : Diagram m k
     simp only [le_inf_iff]
     constructor
     · apply Finset.card_le_card
-      exact Diagram.mul_left_subset _ _ _ _
+      exact Diagram.mul_left_subset _ _
     · rw[PlanarRook.Diagram.consistant]
       rw[PlanarRook.Diagram.consistant]
       apply Finset.card_le_card
-      exact Diagram.mul_right_subset _ _ _ _
+      exact Diagram.mul_right_subset _ _
 
 /-! ## The twist factor in the monoid
 
@@ -631,11 +561,11 @@ theorem mul_exponent_is_stubs' (d₁ : Diagram n m) (d₂ : Diagram m k) :
       have h : (d₁ * d₂).through_index = (d₁.right_defects ∩ d₂.left_defects).card := by
         unfold Diagram.through_index
         simp only [Diagram.hmul_left_defects]
-        apply Finset.card_bij' (α := Fin n) (β := Fin m) (i := fun a ha => d₁.lr_bijection ⟨a, by
+        apply Finset.card_bij' (α := Fin n) (β := Fin m) (i := fun a ha => d₁.bijection ⟨a, by
             simp only [Finset.mem_filter, Finset.mem_univ, true_and] at ha
             rcases ha with ⟨haa, hab⟩
             exact haa
-            ⟩) (j := fun b hb => d₁.lr_bijection.symm ⟨b, by
+            ⟩) (j := fun b hb => d₁.bijection.symm ⟨b, by
             simp only [Finset.mem_inter] at hb
             rcases hb with ⟨hba, hbb⟩
             exact hba
@@ -767,8 +697,8 @@ def Diagram.ι_involutive {n m : ℕ} (d : Diagram n m) :
 instance {n : ℕ} : Function.Involutive (α := Diagram n n) Diagram.ι :=
   Diagram.ι_involutive
 
-def Diagram.ι_lr_bijection {n m : ℕ} (d : Diagram n m) :
-  d.ι.lr_bijection = d.lr_bijection.symm :=
+def Diagram.ι_bijection {n m : ℕ} (d : Diagram n m) :
+  d.ι.bijection = d.bijection.symm :=
      Subsingleton.elim _ _
 
 /-- The involution reverses the order of multiplication. -/
@@ -782,12 +712,12 @@ def Diagram.ι_mul {n m k : ℕ} (d₁ : Diagram n m) (d₂ : Diagram m k) :
       · intro h
         rcases h with ⟨ha, hb⟩
         use ha
-        rw [←Diagram.ι_lr_bijection] at hb
+        rw [←Diagram.ι_bijection] at hb
         exact hb
       · intro h
         rcases h with ⟨ha, hb⟩
         use ha
-        rw [←Diagram.ι_lr_bijection]
+        rw [←Diagram.ι_bijection]
         exact hb
     constructor
 

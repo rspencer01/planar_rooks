@@ -12,7 +12,7 @@ import Mathlib.Algebra.Module.Submodule.Defs
 /-! # Planar rooks algebras as a cellular algebra
 -/
 
-variable (k : Type) [Field k] (δ : k)
+variable (k : Type) [Field k] (δ : k) [DecidableEq k]
 variable (n : ℕ)
 
 
