@@ -111,7 +111,7 @@ noncomputable instance : CellularAlgebra k (PlanarRookAlgebra n δ) where
           rhs
           simp
         }
-        apply (Finset.eq_of_subset_of_card_le (PlanarRook.Diagram.mul_right_subset _ _ _ _))
+        apply (Finset.eq_of_subset_of_card_le (PlanarRook.Diagram.mul_right_subset _ _))
         apply le_of_eq
         unfold PlanarRook.Diagram.through_index at h
         rw [PlanarRook.Diagram.consistant] at h

@@ -128,14 +128,10 @@ instance PlanarRookAlgebra.nonUnitalNonAssocSemiring :
     NonUnitalNonAssocSemiring (PlanarRookAlgebra n δ) := {
   left_distrib := fun a b c => by
     ext d
-    simp only [PlanarRookAlgebra.add_coeff]
-    rw [PlanarRookAlgebra.mul_apply]
-    rw [PlanarRookAlgebra.mul_apply]
-    rw [PlanarRookAlgebra.mul_apply]
-    rw [←Finset.univ.sum_add_distrib]
+    simp only [PlanarRookAlgebra.add_coeff, PlanarRookAlgebra.mul_apply,
+               ←Finset.univ.sum_add_distrib]
     apply Finset.sum_congr rfl
     intro x hx
-    rw [←Finset.univ.sum_add_distrib]
     apply Finset.sum_congr rfl
     intro y hy
     by_cases h : x * y = d
@@ -144,14 +140,10 @@ instance PlanarRookAlgebra.nonUnitalNonAssocSemiring :
     · simp [h]
   right_distrib := fun a b c => by
     ext d
-    simp only [PlanarRookAlgebra.add_coeff]
-    rw [PlanarRookAlgebra.mul_apply]
-    rw [PlanarRookAlgebra.mul_apply]
-    rw [PlanarRookAlgebra.mul_apply]
-    rw [←Finset.univ.sum_add_distrib]
+    simp only [PlanarRookAlgebra.add_coeff, PlanarRookAlgebra.mul_apply,
+               ←Finset.univ.sum_add_distrib]
     apply Finset.sum_congr rfl
     intro x hx
-    rw [←Finset.univ.sum_add_distrib]
     apply Finset.sum_congr rfl
     intro y hy
     by_cases h : x * y = d
@@ -169,26 +161,10 @@ theorem PlanarRookAlgebra.mul_single (x : PlanarRookAlgebra n δ)
         (x d₂) •
           (PlanarRookAlgebra.single δ (d₂ * d₁)
             (c * (δ ^ PlanarRook.Monoid.mul_exponent d₂ d₁))) := by
-  rw [PlanarRookAlgebra.mul_def]
-  conv => {
-    lhs
-    arg 2
-    ext d₁
-    arg 2
-    ext d₁
-    arg 1
-    rw [PlanarRookAlgebra.single_apply]
-    simp
-  }
-  conv => {
-    lhs
-    arg 2
-    ext d₁
-    simp [Finset.univ.sum_ite_eq']
-  }
-  apply Finset.sum_congr rfl
-  intro x₁ hx₁
-  simp[PlanarRookAlgebra.smul_single δ]
+  simp only [PlanarRookAlgebra.mul_def, single_apply, mul_ite, mul_zero, ite_smul, smul_single,
+    zero_smul, Finset.sum_ite_eq', Finset.mem_univ, ↓reduceIte]
+  congr
+  ext x
   ring_nf
 
 theorem PlanarRookAlgebra.single_mul (x : PlanarRookAlgebra n δ)
@@ -279,16 +255,7 @@ instance PlanarRookAlgebra.nonUnitalSemiring :
       rw [add_comm]
       rw [←PlanarRook.Monoid.mul_exponent_assoc d₁ d₂ d₃]
     }
-    conv => {
-      lhs
-      arg 3
-      ring_nf
-    }
-    conv => {
-      rhs
-      arg 3
-      ring_nf
-    }
+    ring_nf
 }
 
 instance PlanarRookAlgebra.hasOne : One (PlanarRookAlgebra n δ) := ⟨PlanarRookAlgebra.one δ⟩
