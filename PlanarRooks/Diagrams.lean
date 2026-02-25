@@ -391,6 +391,10 @@ def mul_left_subset (d₁ : Diagram m k) (s : Finset (Fin n)) (t : Finset (Fin m
     rcases hx with ⟨h₁, h₂⟩
     exact h₁
 
+def through_index_of_mul_independent_of_right (d₁ : Diagram n m) (d₂ d₃ : Diagram m k)
+  (h : d₂.left_defects = d₃.left_defects) : (d₁ * d₂).through_index = (d₁ * d₃).through_index := by
+    rw [through_index, through_index, mul_left_of_right_arbitrary' d₁ d₂ d₃ h]
+
 /-! ### Lemmata for proving associativity of multiplication
 -/
 def restate_mul₂ (d₁ : Diagram n m) (d₂ : Diagram m k) (x : d₁.left_defects)
@@ -732,12 +736,13 @@ def mul_exponent_assoc (d₁ : Diagram n m) (d₂ : Diagram m k) (d₃ : Diagram
                        (PlanarRook.Monoid.mul_exponent_ge_zero _ _)]
     rw [PlanarRook.Monoid.mul_exponent_assoc']
 
-def mul_exponent_of_right_arbitrary (d₁ : Diagram n m)
-  (s : Finset (Fin m)) (t u : Finset (Fin k)) (h₁ : s.card = t.card) (h₂ : s.card = u.card) :
-  Monoid.mul_exponent d₁ (Diagram.mk s t h₁) = Monoid.mul_exponent d₁ (Diagram.mk s u h₂) := by
+def mul_exponent_of_right_arbitrary (d₁ : Diagram n m) (d₂ d₃ : Diagram m k)
+  (h₁ : d₂.left_defects = d₃.left_defects) :
+  Monoid.mul_exponent d₁ d₂ = Monoid.mul_exponent d₁ d₃ := by
     unfold mul_exponent
     rw [mul_exponent_is_stubs']
     rw [mul_exponent_is_stubs']
+    rw [h₁]
 
 end Monoid
 
