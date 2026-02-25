@@ -600,7 +600,6 @@ def diagram_basis_swap :
 
 theorem diagram_basis'_ι : ι (n:=n) =
   (diagram_basis' δ).constr k ((diagram_basis' δ) ∘ diagram_basis_swap) := by
-    unfold ι
     apply Module.Basis.constr_eq
     intro d
     simp [diagram_basis, diagram_basis_swap, diagram_basis', Finsupp.single_apply]
@@ -608,12 +607,9 @@ theorem diagram_basis'_ι : ι (n:=n) =
 
 def foobar : (fun x => match x with
     | ⟨μ, (s, t)⟩ => (PlanarRookAlgebra.diagram_basis' δ (n:=n)) ⟨μ, (t, s)⟩) =
-      ((diagram_basis' δ) ∘ diagram_basis_swap) := by
-    ext x
-    rfl
+      ((diagram_basis' δ) ∘ diagram_basis_swap) := rfl
 
-theorem ι_anti (a b : PlanarRookAlgebra n δ) :
-  ι (a * b) = (ι b) * (ι a) := by
+theorem ι_anti (a b : PlanarRookAlgebra n δ) : ι (a * b) = (ι b) * (ι a) := by
   rw [←(diagram_basis δ).sum_repr a]
   rw[Finset.sum_mul]
   have qq := map_sum (f := fun i => ((diagram_basis δ).repr a) i • (diagram_basis δ) i * b) ι
@@ -643,8 +639,7 @@ theorem ι_anti (a b : PlanarRookAlgebra n δ) :
   simp only [Module.Basis.constr_apply_fintype, Module.Basis.equivFun_self, Function.comp_apply,
     ite_smul, one_smul, zero_smul, Finset.sum_ite_eq, Finset.mem_univ, ↓reduceIte]
   rw[diagram_basis_mul]
-  rw [PlanarRook.Diagram.ι_mul]
-  rw[PlanarRook.Monoid.mul_exponent_of_ι]
+  simp [PlanarRook.Diagram.ι_mul]
 
 
 end PlanarRookAlgebra

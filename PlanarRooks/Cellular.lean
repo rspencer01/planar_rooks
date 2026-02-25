@@ -50,6 +50,12 @@ def all_tableaux_range (Λ : Type) (S : Set Λ) (tableau : Λ → Type)
   (c : Module.Basis (ι := Σ μ : Λ, tableau μ × tableau μ) k A) :=
      c '' double_tableaux_in Λ S tableau
 
+/-- The `k`-linear span of a subset of tableaux.
+
+When this is a subset of weights closed under the partial order, we will show taht this is a
+two-sided ideal of the cellular algebra. However, we need a definition now so that we can talk
+about the multiplication rule for the basis elements.
+-/
 def tableau_linear_span (Λ : Type) (S : Set Λ) (tableau : Λ → Type)
   (c : Module.Basis (ι := Σ μ : Λ, tableau μ × tableau μ) k A)
   : Submodule k A := Submodule.span k (all_tableaux_range k A Λ S tableau c)
@@ -109,9 +115,15 @@ Some of the conditions on cellular algebras in the definition are written in ter
 elements but have obvious extensions to the entire algebra.
  -/
 
+/-- The multiplication map `r_basis` extended to all of `A` by linearity.
+-/
 noncomputable def CellularAlgebra.r : (μ : cellular.Λ) → cellular.tableau μ → cellular.tableau μ →
   A →ₗ[k] k := fun μ s t => (cellular.c.constr k (fun b => cellular.r_basis b μ s t))
 
+/-- The key requirement for cellular algebras.
+
+This is the extension of `CellularAlgebra.multiplication_rule_basis` to all of `A` by linearity.
+-/
 theorem CellularAlgebra.multiplication_rule : ∀ (a : A) (μ : cellular.Λ) (s t : cellular.tableau μ),
   a * (cellular.c ⟨μ, (s, t)⟩) ≡
   ∑ (u : cellular.tableau μ), cellular.r k A μ s u a • (cellular.c ⟨μ, (u, t)⟩)
@@ -136,10 +148,14 @@ $S$.
 def CellularAlgebra.tableau_span (S : Set cellular.Λ) : Submodule k A :=
   tableau_linear_span k A cellular.Λ S cellular.tableau cellular.c
 
+/-- Increasing the set of weights increases the span.
+-/
 def CellularAlgebra.tableau_span_mono (S₁ S₂ : Set cellular.Λ) (h : S₁ ⊆ S₂) :
   CellularAlgebra.tableau_span k A S₁ ≤ CellularAlgebra.tableau_span k A S₂ :=
     Submodule.span_mono (Set.image_mono (double_tableaux_in_mono h))
 
+/-- The span of a strictly smaller set of weights is strictly smaller.
+-/
 def CellularAlgebra.tableau_span_mono' (S₁ S₂ : Set cellular.Λ) (h : S₁ ⊂ S₂) :
   CellularAlgebra.tableau_span k A S₁ < CellularAlgebra.tableau_span k A S₂ := by
     apply lt_of_le_of_ne
@@ -162,8 +178,7 @@ def CellularAlgebra.tableau_span_mono' (S₁ S₂ : Set cellular.Λ) (h : S₁ �
         simp [hq₁]
       have kk₂ := kk q
       have jj := (Module.Basis.self_mem_span_image cellular.c).mp kk₂
-      unfold double_tableaux_in at jj
-      simp at jj
+      simp [double_tableaux_in] at jj
       contradiction
 
 theorem CellularAlgebra.c_injective {μ : Λ k A} {s₁ t₁ s₂ t₂ : tableau μ}

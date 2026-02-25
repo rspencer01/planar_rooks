@@ -92,12 +92,9 @@ def pi_iso' :
   (Σ k : ℕ ,          {S : Finset (Fin n) // S.card = k} × {S : Finset (Fin m) // S.card = k}) ≃
   (Σ k : Fin (n + 1), {S : Finset (Fin n) // S.card = k} × {S : Finset (Fin m) // S.card = k}) := {
     toFun := fun ⟨h, ⟨l, hl⟩, ⟨r, hr⟩⟩ => ⟨⟨h, by
-      rw [←hl]
       have k := Finset.card_le_univ l
       simp only [Fintype.card_fin] at k
-      simp only [gt_iff_lt]
-      rw[←Nat.le_iff_lt_add_one]
-      exact k
+      simp only [←hl, ←Nat.le_iff_lt_add_one, k]
       ⟩, ⟨l, hl⟩, ⟨r, hr⟩⟩,
     invFun := fun ⟨⟨h, _⟩, ⟨l, hl⟩, ⟨r, hr⟩⟩ => ⟨h, ⟨l, hl⟩, ⟨r, hr⟩⟩,
   }
@@ -110,8 +107,7 @@ def pi_iso₂ : Diagram n m ≃
 instance {n m} : Finite (Diagram n m) := Finite.of_equiv _ pi_iso₂.symm
 instance {n m} : Fintype (Diagram n m) := {
   elems := Finset.univ.image pi_iso₂.invFun,
-  complete := by
-    intro d
+  complete := fun d => by
     simp only [Finset.mem_image, Finset.mem_univ, true_and]
     use pi_iso₂.toFun d
     simp
@@ -727,8 +723,9 @@ theorem Monoid.ι_through_index (d : Diagram n m) :
     simp [Diagram.ι, Diagram.through_index, d.consistant]
 
 /-- The involution preserves the multiplication exponent. -/
+@[simp]
 theorem Monoid.mul_exponent_of_ι (d₁ : Diagram n m) (d₂ : Diagram m k) :
-  Monoid.mul_exponent d₁ d₂ = Monoid.mul_exponent d₂.ι d₁.ι := by
+  Monoid.mul_exponent d₂.ι d₁.ι = Monoid.mul_exponent d₁ d₂ := by
     simp only [Monoid.mul_exponent, Monoid.mul_exponent']
     rw[←Diagram.ι_mul]
     rw[Monoid.ι_through_index (d₁ * d₂)]
