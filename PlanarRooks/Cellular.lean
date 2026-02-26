@@ -23,7 +23,7 @@ exactly the same as in their paper, but it is close enough for our purposes. We 
 modules and the resultant representation theory.
 -/
 
-variable (k : Type) [Field k]
+variable {k : Type} [Field k]
 variable (A : Type) [Ring A] [Algebra k A]
 
 /-! ## Preliminary and helper definitions
@@ -58,7 +58,7 @@ about the multiplication rule for the basis elements.
 -/
 def tableau_linear_span (Λ : Type) (S : Set Λ) (tableau : Λ → Type)
   (c : Module.Basis (ι := Σ μ : Λ, tableau μ × tableau μ) k A)
-  : Submodule k A := Submodule.span k (all_tableaux_range k A Λ S tableau c)
+  : Submodule k A := Submodule.span k (all_tableaux_range A Λ S tableau c)
 
 /-- An anti-involution is a linear involution that reverses the order of multiplication.
 -/
@@ -86,11 +86,11 @@ class CellularAlgebra (k : Type) [Field k] (A : Type) [Ring A] [Algebra k A] whe
   [decidable_eq_tableau : ∀ μ : Λ, DecidableEq (tableau μ)]
   [inhabited_tableau : ∀ μ : Λ, Inhabited (tableau μ)]
   (c : Module.Basis (ι := Σ μ : Λ, tableau μ × tableau μ) k A)
-  (ι_antiinvolution : antiinvolution k A (c.constr (S := k) (fun ⟨μ, (s, t)⟩ => c ⟨μ, (t, s)⟩)))
+  (ι_antiinvolution : antiinvolution A (c.constr (S := k) (fun ⟨μ, (s, t)⟩ => c ⟨μ, (t, s)⟩)))
   (r_basis : (Σ ν : Λ, tableau ν × tableau ν) → (μ : Λ) → tableau μ → tableau μ → k)
   (multiplication_rule_basis : ∀ (a : Σ μ : Λ, tableau μ × tableau μ) (μ : Λ) (s t : tableau μ),
     (c a) * (c ⟨μ, (s, t)⟩) ≡ ∑ (u : tableau μ), r_basis a μ s u • (c ⟨μ, (u, t)⟩)
-      [SMOD tableau_linear_span k A Λ {ν : Λ | ν < μ} tableau c]
+      [SMOD tableau_linear_span A Λ {ν : Λ | ν < μ} tableau c]
   )
 
 variable [cellular : CellularAlgebra k A]
@@ -109,6 +109,13 @@ instance : LT cellular.Λ := cellular.Λ_order.toLT
 instance (μ : cellular.Λ) : Inhabited (cellular.tableau μ) := cellular.inhabited_tableau μ
 instance : Fintype ((μ : cellular.Λ) × cellular.tableau μ × cellular.tableau μ) := inferInstanceAs _
 
+namespace CellularAlgebra
+/-- The subspace of $A$ spanned by the basis elements corresponding to tableaux of weights in a set
+$S$.
+-/
+def tableau_span (S : Set cellular.Λ) : Submodule k A :=
+  tableau_linear_span A cellular.Λ S cellular.tableau cellular.c
+
 /-! ## Unfolding some linear maps
 
 Some of the conditions on cellular algebras in the definition are written in terms of the basis
@@ -117,17 +124,17 @@ elements but have obvious extensions to the entire algebra.
 
 /-- The multiplication map `r_basis` extended to all of `A` by linearity.
 -/
-noncomputable def CellularAlgebra.r : (μ : cellular.Λ) → cellular.tableau μ → cellular.tableau μ →
+noncomputable def r : (μ : cellular.Λ) → cellular.tableau μ → cellular.tableau μ →
   A →ₗ[k] k := fun μ s t => (cellular.c.constr k (fun b => cellular.r_basis b μ s t))
 
 /-- The key requirement for cellular algebras.
 
 This is the extension of `CellularAlgebra.multiplication_rule_basis` to all of `A` by linearity.
 -/
-theorem CellularAlgebra.multiplication_rule : ∀ (a : A) (μ : cellular.Λ) (s t : cellular.tableau μ),
+theorem multiplication_rule : ∀ (a : A) (μ : cellular.Λ) (s t : cellular.tableau μ),
   a * (cellular.c ⟨μ, (s, t)⟩) ≡
-  ∑ (u : cellular.tableau μ), cellular.r k A μ s u a • (cellular.c ⟨μ, (u, t)⟩)
-  [SMOD tableau_linear_span k A cellular.Λ {ν | ν < μ} cellular.tableau cellular.c] := by
+  ∑ (u : cellular.tableau μ), cellular.r A μ s u a • (cellular.c ⟨μ, (u, t)⟩)
+  [SMOD tableau_span A {ν | ν < μ} ] := by
        intro a μ s t
        rw [←cellular.c.sum_repr a]
        simp only [Finset.sum_mul, smul_mul_assoc]
@@ -142,24 +149,18 @@ theorem CellularAlgebra.multiplication_rule : ∀ (a : A) (μ : cellular.Λ) (s 
        simp only [Module.Basis.constr_basis]
        exact cellular.multiplication_rule_basis i μ s t
 
-/-- The subspace of $A$ spanned by the basis elements corresponding to tableaux of weights in a set
-$S$.
--/
-def CellularAlgebra.tableau_span (S : Set cellular.Λ) : Submodule k A :=
-  tableau_linear_span k A cellular.Λ S cellular.tableau cellular.c
-
 /-- Increasing the set of weights increases the span.
 -/
-def CellularAlgebra.tableau_span_mono (S₁ S₂ : Set cellular.Λ) (h : S₁ ⊆ S₂) :
-  CellularAlgebra.tableau_span k A S₁ ≤ CellularAlgebra.tableau_span k A S₂ :=
+def tableau_span_mono (S₁ S₂ : Set cellular.Λ) (h : S₁ ⊆ S₂) :
+  tableau_span A S₁ ≤ tableau_span A S₂ :=
     Submodule.span_mono (Set.image_mono (double_tableaux_in_mono h))
 
 /-- The span of a strictly smaller set of weights is strictly smaller.
 -/
-def CellularAlgebra.tableau_span_mono' (S₁ S₂ : Set cellular.Λ) (h : S₁ ⊂ S₂) :
-  CellularAlgebra.tableau_span k A S₁ < CellularAlgebra.tableau_span k A S₂ := by
+def tableau_span_mono' (S₁ S₂ : Set cellular.Λ) (h : S₁ ⊂ S₂) :
+  tableau_span A S₁ < tableau_span A S₂ := by
     apply lt_of_le_of_ne
-    · exact tableau_span_mono k A S₁ S₂ h.subset
+    · exact tableau_span_mono A S₁ S₂ h.subset
     · have ⟨q, ⟨hq₁, hq₂⟩⟩ := Set.exists_of_ssubset h
       unfold tableau_span
       unfold tableau_linear_span
@@ -169,7 +170,7 @@ def CellularAlgebra.tableau_span_mono' (S₁ S₂ : Set cellular.Λ) (h : S₁ �
       let t : tableau q × tableau q := Inhabited.default
       have kk := (k₁ (c ⟨q, t⟩)).mpr
       rw[all_tableaux_range] at kk
-      have q : c ⟨q, t⟩ ∈ Submodule.span k (all_tableaux_range k A _ S₂ tableau c) := by
+      have q : c ⟨q, t⟩ ∈ Submodule.span k (all_tableaux_range A _ S₂ tableau c) := by
         apply Submodule.mem_span_of_mem
         unfold all_tableaux_range
         unfold double_tableaux_in
@@ -181,34 +182,34 @@ def CellularAlgebra.tableau_span_mono' (S₁ S₂ : Set cellular.Λ) (h : S₁ �
       simp [double_tableaux_in] at jj
       contradiction
 
-theorem CellularAlgebra.c_injective {μ : Λ k A} {s₁ t₁ s₂ t₂ : tableau μ}
+theorem c_injective {μ : Λ k A} {s₁ t₁ s₂ t₂ : tableau μ}
     (h : c ⟨μ, (s₁, t₁)⟩ = c ⟨μ, (s₂, t₂)⟩) :
   s₁ = s₂ ∧ t₁ = t₂ := by
     have k := Module.Basis.injective cellular.c h
     simp only [Sigma.mk.injEq, heq_eq_eq, Prod.mk.injEq, true_and] at k
     exact k
 
-theorem CellularAlgebra.r_of_id {μ} {s u : cellular.tableau μ} :
-  r k A μ s u (1 : A) = if s = u then 1 else 0 := sorry
+theorem r_of_id {μ} {s u : cellular.tableau μ} :
+  r A μ s u (1 : A) = if s = u then 1 else 0 := sorry
 
-theorem CellularAlgebra.r_of_zero {μ} {s u : cellular.tableau μ} :
-  r k A μ s u (0 : A) = 0 := by simp only [r, map_zero]
+theorem r_of_zero {μ} {s u : cellular.tableau μ} :
+  r A μ s u (0 : A) = 0 := by simp only [r, map_zero]
 
-theorem CellularAlgebra.action_doesnt_increase_μ
+theorem action_doesnt_increase_μ
   (a : A) (μ : cellular.Λ) (s t : cellular.tableau μ) :
-  a * c ⟨μ, (s, t)⟩ ∈ cellular.tableau_span k A {ν | ν ≤ μ} := by
-    have h := cellular.multiplication_rule k A a μ s t
+  a * c ⟨μ, (s, t)⟩ ∈ cellular.tableau_span A {ν | ν ≤ μ} := by
+    have h := cellular.multiplication_rule A a μ s t
     have q := SModEq.sub_mem.mp h
     have ss : ({ν | ν < μ} ⊆ {ν | ν ≤ μ}) := by
       simp only [Set.setOf_subset_setOf]
       intro a ha
       exact le_of_lt ha
-    have sst := tableau_span_mono k A _ _ ss
-    have tt : ∀ x, x∈ tableau_span k A {ν | ν < μ} → x ∈ tableau_span k A {ν | ν ≤ μ} := by
+    have sst := tableau_span_mono A _ _ ss
+    have tt : ∀ x, x∈ tableau_span A {ν | ν < μ} → x ∈ tableau_span A {ν | ν ≤ μ} := by
       intro x hx
       exact sst hx
     apply tt at q
-    have ttt: ∑ u, (r k A μ) s u a • c ⟨μ, (u, t)⟩ ∈ tableau_span k A {ν | ν ≤ μ} := by
+    have ttt: ∑ u, (r A μ) s u a • c ⟨μ, (u, t)⟩ ∈ tableau_span A {ν | ν ≤ μ} := by
       apply Submodule.sum_mem
       intro sc hsc
       apply Submodule.smul_mem
@@ -228,8 +229,8 @@ theorem CellularAlgebra.action_doesnt_increase_μ
     simp only [sub_add_cancel] at tttu
     exact tttu
 
-def CellularAlgebra.celluar_ideal (μ : cellular.Λ) : Submodule A A := {
-  carrier := CellularAlgebra.tableau_span k A {ν | ν ≤ μ} ,
+def cellular_ideal (μ : cellular.Λ) : Submodule A A := {
+  carrier := tableau_span A {ν | ν ≤ μ} ,
   add_mem' := Submodule.add_mem _,
   zero_mem' := Submodule.zero_mem _,
   smul_mem' := by
@@ -249,57 +250,62 @@ def CellularAlgebra.celluar_ideal (μ : cellular.Λ) : Submodule A A := {
     have tt := hl₁ hc₁
     unfold double_tableaux_in at tt
     simp only [Set.preimage_setOf_eq, Set.mem_setOf_eq] at tt
-    have q := action_doesnt_increase_μ k A c c₁.fst c₁.snd.1 c₁.snd.2
+    have q := action_doesnt_increase_μ A c c₁.fst c₁.snd.1 c₁.snd.2
     have s : {ν | ν ≤ c₁.fst} ⊆ {ν | ν ≤ μ } := by
       simp only [Set.setOf_subset_setOf]
       intro a ha
       exact ha.trans tt
-    have t := tableau_span_mono k A _ _ s
-    apply t
-    have c₁def : c₁ = ⟨c₁.fst, (c₁.snd.1, c₁.snd.2)⟩ := rfl
-    rw [←c₁def] at q
-    exact q
-}
-def CellularAlgebra.subcelluar_ideal (μ : cellular.Λ) : Submodule A A := {
-  carrier := CellularAlgebra.tableau_span k A {ν | ν < μ} ,
-  add_mem' := Submodule.add_mem _,
-  zero_mem' := Submodule.zero_mem _,
-  smul_mem' := by
-    intro c x hx
-    have k := (Finsupp.mem_span_image_iff_linearCombination _).mp hx
-    simp only at k
-    obtain ⟨l, ⟨hl₁, hl₂⟩⟩ := k
-    rw [←hl₂]
-    simp only [smul_eq_mul, SetLike.mem_coe]
-    rw[Finsupp.linearCombination_apply]
-    rw[Finsupp.mul_sum]
-    simp only [Algebra.mul_smul_comm]
-    apply Submodule.sum_mem
-    intro c₁ hc₁
-    simp only
-    apply Submodule.smul_mem
-    have tt := hl₁ hc₁
-    unfold double_tableaux_in at tt
-    simp only [Set.preimage_setOf_eq, Set.mem_setOf_eq] at tt
-    have q := action_doesnt_increase_μ k A c c₁.fst c₁.snd.1 c₁.snd.2
-    have s : {ν | ν ≤ c₁.fst} ⊆ {ν | ν < μ } := by
-      simp only [Set.setOf_subset_setOf]
-      intro a ha
-      exact lt_of_le_of_lt ha tt
-    have t := (tableau_span_mono k A _ _ s)
+    have t := tableau_span_mono A _ _ s
     apply t
     have c₁def : c₁ = ⟨c₁.fst, (c₁.snd.1, c₁.snd.2)⟩ := rfl
     rw [←c₁def] at q
     exact q
 }
 
-noncomputable def CellularAlgebra.ι : A →ₗ[k] A :=
+notation:50 A "[≤" μ "]" => cellular_ideal A μ
+
+def subcelluar_ideal (μ : cellular.Λ) : Submodule A A := {
+  carrier := tableau_span A {ν | ν < μ} ,
+  add_mem' := Submodule.add_mem _,
+  zero_mem' := Submodule.zero_mem _,
+  smul_mem' := by
+    intro c x hx
+    have k := (Finsupp.mem_span_image_iff_linearCombination _).mp hx
+    simp only at k
+    obtain ⟨l, ⟨hl₁, hl₂⟩⟩ := k
+    rw [←hl₂]
+    simp only [smul_eq_mul, SetLike.mem_coe]
+    rw[Finsupp.linearCombination_apply]
+    rw[Finsupp.mul_sum]
+    simp only [Algebra.mul_smul_comm]
+    apply Submodule.sum_mem
+    intro c₁ hc₁
+    simp only
+    apply Submodule.smul_mem
+    have tt := hl₁ hc₁
+    unfold double_tableaux_in at tt
+    simp only [Set.preimage_setOf_eq, Set.mem_setOf_eq] at tt
+    have q := action_doesnt_increase_μ A c c₁.fst c₁.snd.1 c₁.snd.2
+    have s : {ν | ν ≤ c₁.fst} ⊆ {ν | ν < μ } := by
+      simp only [Set.setOf_subset_setOf]
+      intro a ha
+      exact lt_of_le_of_lt ha tt
+    have t := (tableau_span_mono A _ _ s)
+    apply t
+    have c₁def : c₁ = ⟨c₁.fst, (c₁.snd.1, c₁.snd.2)⟩ := rfl
+    rw [←c₁def] at q
+    exact q
+}
+
+notation:50 A "[<" μ "]" => subcelluar_ideal A μ
+
+noncomputable def ι : A →ₗ[k] A :=
   c.constr (S := k) (fun ⟨μ, (s, t)⟩ => c ⟨μ, (t, s)⟩)
 
 /-- Cellular algebras are equipped with an involution, which is the linear map that swaps
 the two tableaux in the basis elements.
 -/
-theorem CellularAlgebra.ι_involution : Function.Involutive (ι k A) := by
+theorem ι_involution : Function.Involutive (ι (k:=k) A) := by
     unfold Function.Involutive
     have h := Module.Basis.constr_self (cellular.c) k (LinearMap.id)
     have j (a: A): LinearMap.id (R:=k) a = a := rfl
@@ -315,11 +321,11 @@ theorem CellularAlgebra.ι_involution : Function.Involutive (ι k A) := by
       rw [←LinearMap.comp_apply]
     }
     apply LinearMap.ext_iff.mp
-    have q := Module.Basis.constr_comp (cellular.c) k (ι k A) (fun ⟨μ, (s,t)⟩ => c ⟨μ, (t, s)⟩)
+    have q := Module.Basis.constr_comp (cellular.c) k (ι (k:=k) A) (fun ⟨μ, (s,t)⟩ => c ⟨μ, (t, s)⟩)
     conv => {
       lhs
       arg 2
-      unfold CellularAlgebra.ι
+      unfold ι
     }
     rw[← q]
     apply congrArg
@@ -327,7 +333,7 @@ theorem CellularAlgebra.ι_involution : Function.Involutive (ι k A) := by
     have q := Module.Basis.constr_basis (cellular.c) k (fun ⟨μ, (s,t)⟩ => c ⟨μ, (t, s)⟩)
     conv => {
       lhs
-      unfold CellularAlgebra.ι
+      unfold ι
       arg 2
       ext x
       rw[←q x]
@@ -340,6 +346,7 @@ theorem CellularAlgebra.ι_involution : Function.Involutive (ι k A) := by
       simp
     }
     simp
+end CellularAlgebra
 
 section CellularAlgebra
 
@@ -366,13 +373,13 @@ noncomputable instance cell_module_basis (μ : cellular.Λ) :
 
 noncomputable instance cellular_action {μ} : SMul A (cell_module k A μ) := {
   smul := fun a x => Module.Basis.constr (cell_module_basis k A μ) k
-    (fun s => ∑ (u : cellular.tableau μ), (cellular.r k A μ s u a) • (cell_module_basis k A μ u))
+    (fun s => ∑ (u : cellular.tableau μ), (cellular.r A μ s u a) • (cell_module_basis k A μ u))
     x
   }
 
 def cellular_action_is {μ} (a : A) (x : cell_module k A μ) :
   a • x = Module.Basis.constr (cell_module_basis k A μ) k
-    (fun s => ∑ (u : cellular.tableau μ), (cellular.r k A μ s u a) • (cell_module_basis k A μ u))
+    (fun s => ∑ (u : cellular.tableau μ), (cellular.r A μ s u a) • (cell_module_basis k A μ u))
     x := rfl
 
 
@@ -392,7 +399,7 @@ noncomputable instance cell_module_module (μ : cellular.Λ) : Module A (cell_mo
     simp only
     unfold SMul.smul
     simp only [cellular_action, Module.Basis.constr_apply_fintype, Module.Basis.equivFun_apply,
-      CellularAlgebra.r_of_id k A, ite_smul, one_smul, zero_smul, Finset.sum_ite_eq,
+      CellularAlgebra.r_of_id A, ite_smul, one_smul, zero_smul, Finset.sum_ite_eq,
       Finset.mem_univ, ↓reduceIte, Module.Basis.sum_repr]
   add_smul := by
     intro a b y
@@ -401,7 +408,7 @@ noncomputable instance cell_module_module (μ : cellular.Λ) : Module A (cell_mo
     simp only
     unfold SMul.smul
     simp only [cellular_action]
-    have k {s u} : cellular.r k A μ s u (a + b) = cellular.r k A μ s u a + cellular.r k A μ s u b := sorry
+    have k {s u} : cellular.r A μ s u (a + b) = cellular.r A μ s u a + cellular.r A μ s u b := sorry
     conv => {
       lhs
       arg 1
@@ -411,7 +418,7 @@ noncomputable instance cell_module_module (μ : cellular.Λ) : Module A (cell_mo
       ext u
       rw [k]
     }
-    simp only [Pi.add_apply, Module.Basis.constr_apply_fintype, Module.Basis.equivFun_apply]
+    simp only [ Module.Basis.constr_apply_fintype, Module.Basis.equivFun_apply]
     rw[←Finset.sum_add_distrib]
     apply Finset.sum_congr rfl
     intro x hx
@@ -442,7 +449,7 @@ noncomputable instance cell_module_module (μ : cellular.Λ) : Module A (cell_mo
     simp only
     unfold SMul.smul
     unfold cellular_action
-    simp[CellularAlgebra.r_of_zero k A]
+    simp[CellularAlgebra.r_of_zero A]
   smul_zero := by
     intro a
     unfold HSMul.hSMul
@@ -455,7 +462,7 @@ def cell_module_form (μ : cellular.Λ) : cell_module k A μ →ₗ[k] (cell_mod
   sorry
 
 def cell_module_form_contravariant (μ : cellular.Λ) (a : A) (x y : cell_module k A μ) :
-  cell_module_form k A μ (a • x) y = cell_module_form k A μ x (cellular.ι k A a • y) := sorry
+  cell_module_form k A μ (a • x) y = cell_module_form k A μ x (cellular.ι A a • y) := sorry
 
 def cell_module_radical (μ : cellular.Λ) : Submodule A (cell_module k A μ) := {
   carrier := {x | ∀ y, cell_module_form k A μ x y = 0},

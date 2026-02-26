@@ -29,7 +29,7 @@ noncomputable def my_r : (Σ ν : Fin (n + 1), {S : Finset (Fin n) // S.card = �
     have prod := a * cst
     exact if (prod.left_defects = V) then δ ^ (PlanarRook.Monoid.mul_exponent a cst) else 0
 
-noncomputable instance : CellularAlgebra k (PlanarRookAlgebra n δ) where
+noncomputable instance : CellularAlgebra k (PlanarRook.Algebra n δ) where
   Λ := Fin (n + 1)
   Λ_order := by infer_instance
   Λ_fintype := by infer_instance
@@ -38,18 +38,18 @@ noncomputable instance : CellularAlgebra k (PlanarRookAlgebra n δ) where
   decidable_eq_tableau := by infer_instance
   inhabited_tableau := fun μ => ⟨(Finset.range μ).attachFin
     (fun m hm => lt_of_lt_of_le (Finset.mem_range.mp hm) (Nat.le_of_lt_succ μ.is_lt)), by simp⟩
-  c := PlanarRookAlgebra.diagram_basis' δ
+  c := PlanarRook.Algebra.diagram_basis' δ
   ι_antiinvolution := by
     intro a b
-    have q := PlanarRookAlgebra.diagram_basis'_ι δ (n:= n)
-    rw [←PlanarRookAlgebra.foobar] at q
+    have q := PlanarRook.Algebra.diagram_basis'_ι δ (n:= n)
+    rw [←PlanarRook.Algebra.foobar] at q
     rw [←q]
-    exact PlanarRookAlgebra.ι_anti _ a b
+    exact PlanarRook.Algebra.ι_anti _ a b
   r_basis := my_r k δ n
   multiplication_rule_basis := fun ⟨ν, S₁, T₁⟩ μ s t => by
-    unfold PlanarRookAlgebra.diagram_basis'
+    unfold PlanarRook.Algebra.diagram_basis'
     simp only [Module.Basis.coe_reindex, Function.comp_apply]
-    rw [PlanarRookAlgebra.diagram_basis_mul]
+    rw [PlanarRook.Algebra.diagram_basis_mul]
     unfold my_r
     by_cases h : ((@PlanarRook.Diagram.mk (n:=n) (m:=n) S₁.val T₁.val (by simp[S₁.prop, T₁.prop])) *
                   (@PlanarRook.Diagram.mk (n:=n) (m:=n) s.val s.val rfl)).through_index = μ
@@ -159,10 +159,10 @@ noncomputable instance : CellularAlgebra k (PlanarRookAlgebra n δ) where
         simp [PlanarRook.Diagram.pi_iso₂, PlanarRook.Diagram.pi_iso', PlanarRook.Diagram.pi_iso]
       }
       have q (d : PlanarRook.Diagram n n) (h₁ : d.through_index < ↑μ ) :
-        (PlanarRookAlgebra.diagram_basis δ) d ∈
-        tableau_linear_span k (PlanarRookAlgebra n δ) (Fin (n + 1)) {ν | ν < μ}
+        (PlanarRook.Algebra.diagram_basis δ) d ∈
+        tableau_linear_span (PlanarRook.Algebra n δ) (Fin (n + 1)) {ν | ν < μ}
         (fun k ↦ { S : Finset (Fin n) // S.card = ↑k })
-        ((PlanarRookAlgebra.diagram_basis δ).reindex PlanarRook.Diagram.pi_iso₂) := by
+        ((PlanarRook.Algebra.diagram_basis δ).reindex PlanarRook.Diagram.pi_iso₂) := by
           unfold tableau_linear_span
           apply Submodule.mem_span_of_mem
           unfold all_tableaux_range

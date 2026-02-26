@@ -14,60 +14,80 @@ variable {k : Type} [Field k] (δ : k)
 -- The paramter δ is "unused" but must be carried around to define multiplication
 set_option linter.unusedVariables false
 
-def PlanarRookAlgebra (n : ℕ) (δ : k) := ((PlanarRook.Diagram n n) → k)
+namespace PlanarRook
+
+/-- The planar rook algebra over a field `k` with parameter `δ` consists of elements which are
+formal `k`-linear combinations of planar rook diagrams on `n` strands.
+
+The multiplication is more complicated and is given by monoid multiplication of diagrams, with
+a factor of `δ` raised to the number of dangling strands after multiplication.
+-/
+def Algebra (n : ℕ) (δ : k) := ((PlanarRook.Diagram n n) → k)
+
+namespace Algebra
 
 @[ext]
-def PlanarRookAlgebra.ext {n : ℕ} {δ : k} {x y : PlanarRookAlgebra n δ} :
-    (∀ d : PlanarRook.Diagram n n, x d = y d) → x = y := fun h => by simp [funext h]
+def ext {n : ℕ} {δ : k} {x y : Algebra n δ} :
+    (∀ d : Diagram n n, x d = y d) → x = y := fun h => by simp [funext h]
 
-instance : AddCommMonoid (PlanarRookAlgebra n δ) :=
-  inferInstanceAs (AddCommMonoid ((PlanarRook.Diagram n n) → k))
+instance : AddCommMonoid (Algebra n δ) := inferInstanceAs (AddCommMonoid (_ → k))
 
-instance PlanarRookAlgebra.addCommGroup : AddCommGroup (PlanarRookAlgebra n δ) :=
-  inferInstanceAs (AddCommGroup ((PlanarRook.Diagram n n) → k))
+instance : AddCommGroup (Algebra n δ) := inferInstanceAs (AddCommGroup (_ → k))
 
 @[simp]
-theorem PlanarRookAlgebra.zero_coeff (d : PlanarRook.Diagram n n) :
-    (0 : PlanarRookAlgebra n δ) d = 0 := rfl
+theorem zero_coeff (d : Diagram n n) : (0 : Algebra n δ) d = 0 := rfl
 
 @[simp]
-theorem PlanarRookAlgebra.add_coeff (x₁ x₂ : PlanarRookAlgebra n δ) (d : PlanarRook.Diagram n n) :
+theorem add_coeff (x₁ x₂ : Algebra n δ) (d : Diagram n n) :
     (x₁ + x₂) d = (x₁ d) + (x₂ d) := rfl
 
-/- The planar rook algebra is a vector space over k.
+/-- The planar rook algebra is a vector space over k.
 -/
-instance : Module k (PlanarRookAlgebra n δ) := Pi.module _ _ k
+instance : Module k (Algebra n δ) := Pi.module _ _ k
 
-def PlanarRookAlgebra.single : (PlanarRook.Diagram n n) → k → PlanarRookAlgebra n δ :=
-  Pi.single
+/-- The obvious `k` basis of the `PlanarRookAlgebra` is the diagram basis.
+
+In fact, this is how it is naturally defined, as the maps from diagrams to the underlying ring.
+However, the "basis" also requires some assurances about finiteness that we provide explicitly
+in this instance.
+
+Note: This could probably be made more general for arbitrary fintypes.
+-/
+instance diagram_basis [DecidableEq k] : Module.Basis (Diagram n n) k (Algebra n δ) := {
+    repr := {
+      toFun := equivFunOnFinite.symm
+      invFun := equivFunOnFinite.toFun
+      map_add' := fun x y => by ext d; rfl
+      map_smul' := fun m x => by ext d; rfl
+    }
+  }
+
+def single : (PlanarRook.Diagram n n) → k → Algebra n δ := Pi.single
 
 @[simp]
-def PlanarRookAlgebra.single_apply (d₁ d₂ : PlanarRook.Diagram n n) (c : k) :
-  (PlanarRookAlgebra.single δ d₁ c) d₂ = if d₂ = d₁ then c else 0 := Pi.single_apply _ _ _
+def single_apply (d₁ d₂ : PlanarRook.Diagram n n) (c : k) :
+  (Algebra.single δ d₁ c) d₂ = if d₂ = d₁ then c else 0 := Pi.single_apply _ _ _
 
 @[simp]
-theorem PlanarRookAlgebra.smul_single (d₁ : PlanarRook.Diagram n n) (c₁ c₂ : k) :
-  c₁ • (PlanarRookAlgebra.single δ d₁ c₂) = PlanarRookAlgebra.single δ d₁ (c₁ * c₂) := by
-    unfold PlanarRookAlgebra.single
+theorem smul_single (d₁ : PlanarRook.Diagram n n) (c₁ c₂ : k) :
+  c₁ • (Algebra.single δ d₁ c₂) = Algebra.single δ d₁ (c₁ * c₂) := by
+    unfold single
     rw [←Pi.single_smul]
     simp only [smul_eq_mul]
 
 @[simp]
-theorem PlanarRookAlgebra.smul_single' (d₁ : PlanarRook.Diagram n n) (c : k) :
-  c • (PlanarRookAlgebra.single δ d₁ 1) = PlanarRookAlgebra.single δ d₁ c := by
-    have q := PlanarRookAlgebra.smul_single δ d₁ c 1
-    rw[q]
-    simp
+theorem smul_single' (d₁ : PlanarRook.Diagram n n) (c : k) :
+  c • (Algebra.single δ d₁ 1) = Algebra.single δ d₁ c := by
+    simp only [Algebra.smul_single δ d₁ c 1, mul_one]
 
-theorem PlanarRookAlgebra.sum_single (x : PlanarRookAlgebra n δ) :
-  x = ∑ d : (PlanarRook.Diagram n n), PlanarRookAlgebra.single δ d (x d) := by
+theorem sum_single (x : Algebra n δ) :
+  x = ∑ d : (PlanarRook.Diagram n n), Algebra.single δ d (x d) := by
     ext m
     rw [Finset.univ.sum_apply m]
-    simp [PlanarRookAlgebra.single_apply]
+    simp [single_apply]
 
-theorem PlanarRookAlgebra.add_single (d : PlanarRook.Diagram n n) (c₁ c₂ : k) :
-  PlanarRookAlgebra.single δ d (c₁ + c₂) =
-    PlanarRookAlgebra.single δ d c₁ + PlanarRookAlgebra.single δ d c₂ := by
+theorem add_single (d : PlanarRook.Diagram n n) (c₁ c₂ : k) :
+  Algebra.single δ d (c₁ + c₂) = Algebra.single δ d c₁ + Algebra.single δ d c₂ := by
     ext x
     simp only [single_apply, add_coeff]
     by_cases h: x = d
@@ -78,45 +98,36 @@ theorem PlanarRookAlgebra.add_single (d : PlanarRook.Diagram n n) (c₁ c₂ : k
 
 This paramter is raised to the exponent of the number of dangling strands
 after monoid multiplication. -/
-def PlanarRookAlgebra.mul (x y : PlanarRookAlgebra n δ) :
-    PlanarRookAlgebra n δ :=
-  ∑ d₁ : (PlanarRook.Diagram n n),
-    ∑ d₂ : (PlanarRook.Diagram n n),
-      ((x d₁) * (y d₂)) •
-        (PlanarRookAlgebra.single δ (d₁ * d₂) (δ ^ PlanarRook.Monoid.mul_exponent d₁ d₂))
+def mul (x y : Algebra n δ) : Algebra n δ :=
+  ∑ d₁ : (Diagram n n), ∑ d₂ : (Diagram n n),
+    ((x d₁) * (y d₂)) • (Algebra.single δ (d₁ * d₂) (δ ^ Monoid.mul_exponent d₁ d₂))
 
-def PlanarRookAlgebra.one : PlanarRookAlgebra n δ :=
-  PlanarRookAlgebra.single δ (PlanarRook.Diagram.id n) 1
+def one : Algebra n δ := single δ (Diagram.id n) 1
 
-def PlanarRookAlgebra.one_apply (d : PlanarRook.Diagram n n) :
-  (PlanarRookAlgebra.one δ) d = if PlanarRook.Diagram.id n = d then 1 else 0 := by
+def one_apply (d : Diagram n n) : (one δ) d = if Diagram.id n = d then 1 else 0 := by
     simp only [one, single_apply]
-    by_cases h : PlanarRook.Diagram.id n = d
+    by_cases h : Diagram.id n = d
     · simp [h]
     · rw [eq_comm] at h
       simp only [h, ↓reduceIte, right_eq_ite_iff, zero_ne_one, imp_false]
       rw [eq_comm] at h
       exact h
 
-instance : Mul (PlanarRookAlgebra n δ) := ⟨PlanarRookAlgebra.mul δ⟩
+instance : Mul (Algebra n δ) := ⟨mul δ⟩
 
-theorem PlanarRookAlgebra.mul_def (x y : PlanarRookAlgebra n δ) :
-    x * y =
-      ∑ d₁ : (PlanarRook.Diagram n n),
-        ∑ d₂ : (PlanarRook.Diagram n n),
-          ((x d₁) * (y d₂)) •
-            (PlanarRookAlgebra.single δ (d₁ * d₂) (δ ^ PlanarRook.Monoid.mul_exponent d₁ d₂)) :=
-  rfl
+theorem mul_def (x y : Algebra n δ) :
+  x * y = ∑ d₁ : (Diagram n n), ∑ d₂ : (Diagram n n),
+    ((x d₁) * (y d₂)) • (single δ (d₁ * d₂) (δ ^ Monoid.mul_exponent d₁ d₂)) := rfl
 
-theorem PlanarRookAlgebra.mul_apply (x y : PlanarRookAlgebra n δ) :
+theorem mul_apply (x y : Algebra n δ) :
   (x * y) m = ∑ d₁, ∑ d₂,
-    if d₁ * d₂ = m then (x d₁) * (y d₂) * (δ ^ PlanarRook.Monoid.mul_exponent d₁ d₂) else 0 := by
-  rw [PlanarRookAlgebra.mul_def]
+    if d₁ * d₂ = m then (x d₁) * (y d₂) * (δ ^ Monoid.mul_exponent d₁ d₂) else 0 := by
+  rw [mul_def]
   conv => {
     lhs
     rw [Fintype.sum_apply m]
     arg 2
-    simp [Finset.sum_apply m (s := Finset.univ), PlanarRookAlgebra.smul_single δ]
+    simp [Finset.sum_apply m (s := Finset.univ), smul_single δ]
   }
   apply Finset.sum_congr rfl
   intro x₁ hx₁
@@ -124,12 +135,10 @@ theorem PlanarRookAlgebra.mul_apply (x y : PlanarRookAlgebra n δ) :
   intro x₂ hx₂
   simp[eq_comm]
 
-instance PlanarRookAlgebra.nonUnitalNonAssocSemiring :
-    NonUnitalNonAssocSemiring (PlanarRookAlgebra n δ) := {
+instance nonUnitalNonAssocSemiring : NonUnitalNonAssocSemiring (Algebra n δ) := {
   left_distrib := fun a b c => by
     ext d
-    simp only [PlanarRookAlgebra.add_coeff, PlanarRookAlgebra.mul_apply,
-               ←Finset.univ.sum_add_distrib]
+    simp only [add_coeff, mul_apply, ←Finset.univ.sum_add_distrib]
     apply Finset.sum_congr rfl
     intro x hx
     apply Finset.sum_congr rfl
@@ -140,8 +149,7 @@ instance PlanarRookAlgebra.nonUnitalNonAssocSemiring :
     · simp [h]
   right_distrib := fun a b c => by
     ext d
-    simp only [PlanarRookAlgebra.add_coeff, PlanarRookAlgebra.mul_apply,
-               ←Finset.univ.sum_add_distrib]
+    simp only [add_coeff, mul_apply, ←Finset.univ.sum_add_distrib]
     apply Finset.sum_congr rfl
     intro x hx
     apply Finset.sum_congr rfl
@@ -150,31 +158,23 @@ instance PlanarRookAlgebra.nonUnitalNonAssocSemiring :
     · simp[h]
       ring
     · simp [h]
-  zero_mul := by simp [PlanarRookAlgebra.mul_def]
-  mul_zero := by simp [PlanarRookAlgebra.mul_def]
+  zero_mul := by simp [mul_def]
+  mul_zero := by simp [mul_def]
 }
 
-theorem PlanarRookAlgebra.mul_single (x : PlanarRookAlgebra n δ)
-    (d₁ : PlanarRook.Diagram n n) (c : k) :
-    x * (PlanarRookAlgebra.single δ d₁ c) =
-      ∑ d₂ : (PlanarRook.Diagram n n),
-        (x d₂) •
-          (PlanarRookAlgebra.single δ (d₂ * d₁)
-            (c * (δ ^ PlanarRook.Monoid.mul_exponent d₂ d₁))) := by
-  simp only [PlanarRookAlgebra.mul_def, single_apply, mul_ite, mul_zero, ite_smul, smul_single,
+theorem mul_single (x : Algebra n δ) (d₁ : Diagram n n) (c : k) :
+  x * (single δ d₁ c) =
+    ∑ d₂ : (Diagram n n),  (x d₂) • (single δ (d₂ * d₁) (c * (δ ^ Monoid.mul_exponent d₂ d₁))) := by
+  simp only [mul_def, single_apply, mul_ite, mul_zero, ite_smul, smul_single,
     zero_smul, Finset.sum_ite_eq', Finset.mem_univ, ↓reduceIte]
   congr
   ext x
   ring_nf
 
-theorem PlanarRookAlgebra.single_mul (x : PlanarRookAlgebra n δ)
-    (d₁ : PlanarRook.Diagram n n) (c : k) :
-    (PlanarRookAlgebra.single δ d₁ c) * x =
-      ∑ d₂ : (PlanarRook.Diagram n n),
-        (x d₂) •
-          (PlanarRookAlgebra.single δ (d₁ * d₂)
-            (c * (δ ^ PlanarRook.Monoid.mul_exponent d₁ d₂))) := by
-  rw [PlanarRookAlgebra.mul_def]
+theorem single_mul (x : Algebra n δ) (d₁ : Diagram n n) (c : k) :
+  (single δ d₁ c) * x =
+    ∑ d₂ : (Diagram n n), (x d₂) • (single δ (d₁ * d₂) (c * (δ ^ Monoid.mul_exponent d₁ d₂))) := by
+  rw [mul_def]
   conv => {
     lhs
     arg 2
@@ -182,7 +182,7 @@ theorem PlanarRookAlgebra.single_mul (x : PlanarRookAlgebra n δ)
     arg 2
     ext d₂
     arg 1
-    rw [PlanarRookAlgebra.single_apply]
+    rw [single_apply]
     simp
   }
   conv => {
@@ -194,55 +194,37 @@ theorem PlanarRookAlgebra.single_mul (x : PlanarRookAlgebra n δ)
   simp only [Finset.univ.sum_ite_eq', Finset.mem_univ, ↓reduceIte]
   apply Finset.sum_congr rfl
   intro x₁ hx₁
-  simp[PlanarRookAlgebra.smul_single δ]
+  simp [smul_single]
   ring_nf
 
-
-theorem PlanarRookAlgebra.mul_single_single (d₁ d₂ : PlanarRook.Diagram n n) (c₁ c₂ : k) :
-    (PlanarRookAlgebra.single δ d₁ c₁) *
-      (PlanarRookAlgebra.single δ d₂ c₂) =
-        PlanarRookAlgebra.single δ (d₁ * d₂)
-          (c₁ * c₂ * (δ ^ PlanarRook.Monoid.mul_exponent d₁ d₂)) := by
-  rw [PlanarRookAlgebra.mul_single δ]
-  conv => {
-    lhs
-    arg 2
-    ext d₁
-    rw [PlanarRookAlgebra.single_apply]
-    simp
-  }
-  rw [Finset.univ.sum_ite_eq']
-  simp
+theorem mul_single_single (d₁ d₂ : Diagram n n) (c₁ c₂ : k) :
+    (single δ d₁ c₁) * (single δ d₂ c₂) =
+        single δ (d₁ * d₂) (c₁ * c₂ * (δ ^ Monoid.mul_exponent d₁ d₂)) := by
+  simp[mul_single δ, single_apply]
   ring_nf
 
-instance PlanarRookAlgebra.nonUnitalSemiring :
-    NonUnitalSemiring (PlanarRookAlgebra n δ) := {
-  mul_assoc := by
-    intro a b c
-    rw [PlanarRookAlgebra.sum_single _ a]
-    rw [Finset.sum_mul (a:=b)]
-    rw [Finset.sum_mul (a:=c)]
-    rw [Finset.sum_mul (a:=b * c)]
+/-! ## Associativity of multiplication
+
+We can now show that multiplication is associative. That is, we have a non-unital semiring structure
+on the planar rook algebra. We will later show that it is unital, and hence a ring.
+-/
+instance nonUnitalSemiring :
+    NonUnitalSemiring (Algebra n δ) := {
+  mul_assoc := fun a b c => by
+    rw [sum_single _ a]
+    simp only [Finset.sum_mul]
     apply Finset.sum_congr rfl
     intro d₁ hd₁
-    rw [PlanarRookAlgebra.sum_single _ b]
-    rw [Finset.sum_mul]
-    rw [Finset.mul_sum]
-    rw [Finset.sum_mul (a:=c)]
-    rw [Finset.mul_sum]
+    rw [sum_single _ b]
+    simp only [Finset.sum_mul, Finset.mul_sum]
     apply Finset.sum_congr rfl
     intro d₂ hd₂
-    rw [PlanarRookAlgebra.sum_single _ c]
-    rw [Finset.mul_sum]
-    rw [Finset.mul_sum]
-    rw [Finset.mul_sum]
+    rw [sum_single _ c]
+    simp only [Finset.mul_sum]
     apply Finset.sum_congr rfl
     intro d₃ hd₃
-    rw [PlanarRookAlgebra.mul_single_single]
-    rw [PlanarRookAlgebra.mul_single_single]
-    rw [PlanarRookAlgebra.mul_single_single]
-    rw [PlanarRookAlgebra.mul_single_single]
-    rw [←PlanarRook.Monoid.mul_assoc]
+    simp only [mul_single_single]
+    rw [←Monoid.mul_assoc]
     ring_nf
     conv => {
       rhs
@@ -250,29 +232,29 @@ instance PlanarRookAlgebra.nonUnitalSemiring :
       arg 1
       rw [mul_assoc]
       arg 2
-      rw [← pow_add (a := δ) (m:= PlanarRook.Monoid.mul_exponent d₂ d₃)]
+      rw [← pow_add (a := δ) (m:= Monoid.mul_exponent d₂ d₃)]
       arg 2
       rw [add_comm]
-      rw [←PlanarRook.Monoid.mul_exponent_assoc d₁ d₂ d₃]
+      rw [←Monoid.mul_exponent_assoc d₁ d₂ d₃]
     }
     ring_nf
 }
 
-instance PlanarRookAlgebra.hasOne : One (PlanarRookAlgebra n δ) := ⟨PlanarRookAlgebra.one δ⟩
+instance hasOne : One (Algebra n δ) := ⟨one δ⟩
 
-theorem PlanarRookAlgebra.one_def : (1 : PlanarRookAlgebra n δ) = PlanarRookAlgebra.one δ :=
-  rfl
+theorem one_def : (1 : Algebra n δ) = one δ := rfl
 
-instance PlanarRookAlgebra.addGroupWithOne : AddGroupWithOne (PlanarRookAlgebra n δ) := {}
+def one_is : (1 : Algebra n δ) = single δ (Diagram.id n) 1 := rfl
 
-instance PlanarRookAlgebra.is_semiring :
-    Semiring (PlanarRookAlgebra (k:=k) n δ) := {
+instance addGroupWithOne : AddGroupWithOne (Algebra n δ) := {}
+
+instance is_semiring :
+    Semiring (Algebra (k:=k) n δ) := {
   one_mul := fun a => by
     ext d
-    rw [PlanarRookAlgebra.one_def]
-    rw [PlanarRookAlgebra.mul_apply]
-    simp only [ PlanarRookAlgebra.one_apply, ite_mul, one_mul,
-      zero_mul]
+    rw [one_def]
+    rw [mul_apply]
+    simp only [one_apply, ite_mul, one_mul, zero_mul]
     conv => {
       lhs
       arg 2
@@ -292,26 +274,17 @@ instance PlanarRookAlgebra.is_semiring :
       rw [ite_and]
     }
     simp only [Finset.sum_ite_irrel, Finset.sum_const_zero, Finset.sum_ite_eq, Finset.mem_univ,
-      ↓reduceIte]
-    conv => {
-      arg 1
-      arg 2
-      ext x
-      arg 1
-      rw [PlanarRook.Diagram.id_mul]
-    }
+      ↓reduceIte, Diagram.id_mul]
     conv => {
       lhs
       rw [Finset.univ.sum_ite_eq']
     }
-    rw [PlanarRook.Monoid.mul_exponent_eq_zero_of_id']
-    simp
+    simp [Monoid.mul_exponent_eq_zero_of_id']
   mul_one := by
-    classical
     intro a
     ext d
-    rw [PlanarRookAlgebra.one_def]
-    rw [PlanarRookAlgebra.mul_apply]
+    rw [one_def]
+    rw [mul_apply]
     simp only [one_apply, mul_ite, mul_one, mul_zero, ite_mul,
       zero_mul]
     conv => {
@@ -341,49 +314,34 @@ instance PlanarRookAlgebra.is_semiring :
       lhs
       arg 2
       ext x
-      simp [PlanarRook.Diagram.mul_id]
+      simp [Diagram.mul_id]
     }
-    simp [@PlanarRook.Monoid.mul_exponent_eq_zero_of_id n]
+    simp [Monoid.mul_exponent_eq_zero_of_id]
 }
 
-def PlanarRookAlgebra.one_is : (1 : PlanarRookAlgebra n δ) =
-  PlanarRookAlgebra.single δ (PlanarRook.Diagram.id n) 1 :=
-  rfl
-
-def PlanarRookAlgebra.single_one_ring_hom : k →+* PlanarRookAlgebra n δ :=
+def single_one_ring_hom : k →+* Algebra n δ :=
   {
-    toFun := fun c => c • (1 : PlanarRookAlgebra n δ)
+    toFun := fun c => c • (1 : Algebra n δ)
     map_one' := one_smul _ _
     map_mul' := fun x y => by
-      rw [PlanarRookAlgebra.one_is]
-      rw [PlanarRookAlgebra.smul_single δ (PlanarRook.Diagram.id n) x (1 : k)]
-      rw [PlanarRookAlgebra.smul_single δ (PlanarRook.Diagram.id n) y (1 : k)]
-      rw [PlanarRookAlgebra.smul_single δ (PlanarRook.Diagram.id n) (x * y) (1 : k)]
-      rw [PlanarRookAlgebra.mul_single_single]
-      rw [PlanarRook.Monoid.mul_exponent_eq_zero_of_id']
-      rw [←PlanarRook.Monoid.one_def]
-      simp
+      simp only [one_is, smul_single, mul_single_single, Diagram.mul_id]
+      rw [Monoid.mul_exponent_eq_zero_of_id']
+      simp [←Monoid.one_def]
     map_zero' := by simp
-    map_add' := fun x y => by
-      rw [PlanarRookAlgebra.one_is]
-      rw [PlanarRookAlgebra.smul_single δ (PlanarRook.Diagram.id n) x (1 : k)]
-      rw [PlanarRookAlgebra.smul_single δ (PlanarRook.Diagram.id n) y (1 : k)]
-      rw [PlanarRookAlgebra.smul_single δ (PlanarRook.Diagram.id n) (x + y) (1 : k)]
-      simp only [mul_one]
-      exact PlanarRookAlgebra.add_single δ _ _ _
+    map_add' := fun x y => by simp [one_is, add_single]
   }
 
-instance PlanarRookAlgebra.is_algebra (δ : k) :
-    Algebra k (PlanarRookAlgebra n δ) := {
-  algebraMap := PlanarRookAlgebra.single_one_ring_hom δ,
+instance is_algebra (δ : k) :
+    _root_.Algebra k (PlanarRook.Algebra n δ) := {
+  algebraMap := single_one_ring_hom δ,
   commutes' := fun r x => by
-    unfold PlanarRookAlgebra.single_one_ring_hom
+    unfold single_one_ring_hom
     simp only [RingHom.coe_mk, MonoidHom.coe_mk, OneHom.coe_mk]
-    rw [PlanarRookAlgebra.one_is]
-    rw [PlanarRookAlgebra.smul_single]
+    rw [one_is]
+    rw [smul_single]
     simp only [mul_one]
-    rw [PlanarRookAlgebra.single_mul]
-    rw [PlanarRookAlgebra.mul_single]
+    rw [single_mul]
+    rw [mul_single]
     conv => {
       lhs
       arg 2
@@ -399,11 +357,11 @@ instance PlanarRookAlgebra.is_algebra (δ : k) :
       simp
     }
   smul_def' := fun r x => by
-    unfold PlanarRookAlgebra.single_one_ring_hom
+    unfold single_one_ring_hom
     simp only [RingHom.coe_mk, MonoidHom.coe_mk, OneHom.coe_mk]
-    rw [PlanarRookAlgebra.one_is]
-    rw [PlanarRookAlgebra.smul_single δ (PlanarRook.Diagram.id n) r (1 : k)]
-    rw [PlanarRookAlgebra.single_mul]
+    rw [one_is]
+    rw [smul_single δ (Diagram.id n) r (1 : k)]
+    rw [single_mul]
     conv => {
       rhs
       arg 2
@@ -414,11 +372,11 @@ instance PlanarRookAlgebra.is_algebra (δ : k) :
       rw [PlanarRook.Monoid.one_mul d₁]
       simp
     }
-    rw [PlanarRookAlgebra.sum_single δ (r • x)]
+    rw [sum_single δ (r • x)]
     apply Finset.sum_congr rfl
     intro x₁ hx₁
     ext d₂
-    simp only [PlanarRookAlgebra.single_apply, PlanarRookAlgebra.smul_single δ]
+    simp only [single_apply, smul_single δ]
     by_cases h : d₂ = x₁
     · simp only [h, ↓reduceIte]
       rw [Pi.smul_apply]
@@ -427,8 +385,8 @@ instance PlanarRookAlgebra.is_algebra (δ : k) :
     · simp [h]
 }
 
-theorem PlanarRookAlgebra.algebra_map :
-  algebraMap k (PlanarRookAlgebra n δ) = PlanarRookAlgebra.single_one_ring_hom δ :=
+theorem algebra_map :
+  algebraMap k (Algebra n δ) = single_one_ring_hom δ :=
   rfl
 
 /-- The planar rook algebra is independent of the parameter δ, up to algebra isomorphism, as long as
@@ -437,10 +395,10 @@ it is not zero.
 This is to say, there are only "two" planar rook algebras, the one where δ = 0 and the one where δ
 is nonzero (and might as well be 1).
 -/
-def PlanarRookAlgebra.parameter_independence (n : ℕ) (δ₁ : k) (δ₁_nonzero : δ₁ ≠ 0) :
-    (PlanarRookAlgebra n δ₁) ≃ₐ[k] (PlanarRookAlgebra n (1 : k)) := {
-      toFun := fun x => ∑ d , PlanarRookAlgebra.single 1 d (x d * (δ₁^ (n - d.through_index)))
-      invFun := fun y => ∑ d, PlanarRookAlgebra.single δ₁ d (y d / (δ₁^ (n - d.through_index)))
+def parameter_independence (n : ℕ) (δ₁ : k) (δ₁_nonzero : δ₁ ≠ 0) :
+    (Algebra n δ₁) ≃ₐ[k] (Algebra n (1 : k)) := {
+      toFun := fun x => ∑ d , single 1 d (x d * (δ₁^ (n - d.through_index)))
+      invFun := fun y => ∑ d, single δ₁ d (y d / (δ₁^ (n - d.through_index)))
       left_inv := by
         intro x
         simp only [Finset.univ.sum_apply, single_apply, Finset.sum_ite_eq, Finset.mem_univ,
@@ -452,7 +410,7 @@ def PlanarRookAlgebra.parameter_independence (n : ℕ) (δ₁ : k) (δ₁_nonzer
           arg 3
           simp [δ₁_nonzero]
         }
-        rw [←PlanarRookAlgebra.sum_single δ₁ x]
+        rw [←sum_single δ₁ x]
       right_inv := by
         intro x
         simp only [Finset.univ.sum_apply, single_apply, Finset.sum_ite_eq, Finset.mem_univ,
@@ -464,19 +422,19 @@ def PlanarRookAlgebra.parameter_independence (n : ℕ) (δ₁ : k) (δ₁_nonzer
           arg 3
           simp [δ₁_nonzero]
         }
-        rw [←PlanarRookAlgebra.sum_single 1 x]
+        rw [←sum_single 1 x]
       map_mul' := by
         intro x y
-        simp only [Finset.sum_mul_sum, PlanarRookAlgebra.mul_single_single]
+        simp only [Finset.sum_mul_sum, mul_single_single]
         ring_nf
         simp only [mul_assoc, ←pow_add]
-        apply PlanarRookAlgebra.ext
+        apply ext
         intro d
-        simp only [Finset.sum_apply d, PlanarRookAlgebra.single_apply]
+        simp only [Finset.sum_apply d, single_apply]
         conv => {
           lhs
           rw [Finset.sum_ite_eq_of_mem (h:=Finset.mem_univ d)]
-          rw [PlanarRookAlgebra.mul_apply]
+          rw [mul_apply]
           rw [Finset.sum_mul]
           arg 2
           ext x₁
@@ -517,64 +475,37 @@ def PlanarRookAlgebra.parameter_independence (n : ℕ) (δ₁ : k) (δ₁_nonzer
         simp only [add_coeff, ← Finset.sum_add_distrib]
         apply Finset.sum_congr rfl
         intro x₁ hx₁
-        rw [←PlanarRookAlgebra.add_single 1 x₁, ←add_mul]
+        rw [←add_single 1 x₁, ←add_mul]
       commutes' := by
         intro r
         simp only [algebra_map, single_one_ring_hom, one_is,
           RingHom.coe_mk, MonoidHom.coe_mk, OneHom.coe_mk]
         ext x
-        simp [Finset.univ.sum_apply x, PlanarRookAlgebra.single_apply]
+        simp [Finset.univ.sum_apply x, single_apply]
         by_cases h : x = (PlanarRook.Diagram.id n)
         · simp [h, PlanarRook.Diagram.through_index_of_id]
         · simp [h]
     }
 
-instance PlanarRookAlgebra.ringConGen : Ring (PlanarRookAlgebra n δ) := {
-  PlanarRookAlgebra.is_semiring _, PlanarRookAlgebra.addCommGroup _,
-  PlanarRookAlgebra.addGroupWithOne _ with
-}
+instance ringConGen : Ring (Algebra n δ) := {is_semiring _, addGroupWithOne _ with}
 
 variable [DecidableEq k]
 
-/-- The obvious `k` basis of the `PlanarRookAlgebra` is the diagram basis.
-
-In fact, this is how it is naturally defined, as the maps from diagrams to the underlying ring.
-However, the "basis" also requires some assurances about finiteness that we provide explicitly
-in this instance.
-
-Note: This could probably be made more general for arbitrary fintypes.
--/
-instance PlanarRookAlgebra.diagram_basis :
-  Module.Basis (PlanarRook.Diagram n n) k (PlanarRookAlgebra n δ) := {
-    repr := {
-      toFun := equivFunOnFinite.symm
-      invFun := equivFunOnFinite.toFun
-      map_add' := fun x y => by
-        ext d
-        rfl
-      map_smul' := fun m x => by
-        ext d
-        rfl
-    }
-  }
-
-theorem PlanarRookAlgebra.diagram_basis_mul (a b : PlanarRook.Diagram n n) :
+theorem diagram_basis_mul (a b : PlanarRook.Diagram n n) :
   (diagram_basis δ a) * (diagram_basis δ b) =
     (δ ^ PlanarRook.Monoid.mul_exponent a b) • (diagram_basis δ) (a * b) := by
     unfold diagram_basis
-    have q := PlanarRookAlgebra.mul_single_single δ a b 1 1
+    have q := mul_single_single δ a b 1 1
     simp only [mul_one, one_mul] at q
     rw[←smul_single' (c:= δ ^ _)] at q
     unfold single at q
     simp[q]
 
-namespace PlanarRookAlgebra
-
 instance diagram_basis' :
   Module.Basis
     (Σ μ : Fin (n + 1), {S : Finset (Fin n) // S.card = μ} × {S : Finset (Fin n) // S.card = μ})
-    k (PlanarRookAlgebra n δ) :=
-    Module.Basis.reindex (PlanarRookAlgebra.diagram_basis _) PlanarRook.Diagram.pi_iso₂
+    k (Algebra n δ) :=
+    Module.Basis.reindex (diagram_basis _) PlanarRook.Diagram.pi_iso₂
 
 theorem diagram_basis'_mul
   (a b : Σ μ : Fin (n + 1), {S : Finset (Fin n) // S.card = μ} × {S : Finset (Fin n) // S.card = μ})
@@ -586,11 +517,11 @@ theorem diagram_basis'_mul
     (diagram_basis' δ) (PlanarRook.Diagram.pi_iso₂.toFun
       (PlanarRook.Diagram.pi_iso₂.invFun a * PlanarRook.Diagram.pi_iso₂.invFun b)) := by
     unfold diagram_basis'
-    simp [Module.Basis.reindex_apply, PlanarRookAlgebra.diagram_basis_mul]
+    simp [Module.Basis.reindex_apply, diagram_basis_mul]
 
 /-! ## The algebra anti-involution
 -/
-noncomputable def ι {δ : k} : (PlanarRookAlgebra n δ) →ₗ[k] (PlanarRookAlgebra n δ) :=
+noncomputable def ι {δ : k} : (Algebra n δ) →ₗ[k] (Algebra n δ) :=
   (diagram_basis δ).constr k ((diagram_basis δ) ∘ PlanarRook.Diagram.ι)
 
 def diagram_basis_swap :
@@ -606,10 +537,10 @@ theorem diagram_basis'_ι : ι (n:=n) =
     congr
 
 def foobar : (fun x => match x with
-    | ⟨μ, (s, t)⟩ => (PlanarRookAlgebra.diagram_basis' δ (n:=n)) ⟨μ, (t, s)⟩) =
+    | ⟨μ, (s, t)⟩ => (diagram_basis' δ (n:=n)) ⟨μ, (t, s)⟩) =
       ((diagram_basis' δ) ∘ diagram_basis_swap) := rfl
 
-theorem ι_anti (a b : PlanarRookAlgebra n δ) : ι (a * b) = (ι b) * (ι a) := by
+theorem ι_anti (a b : Algebra n δ) : ι (a * b) = (ι b) * (ι a) := by
   rw [←(diagram_basis δ).sum_repr a]
   rw[Finset.sum_mul]
   have qq := map_sum (f := fun i => ((diagram_basis δ).repr a) i • (diagram_basis δ) i * b) ι
@@ -641,5 +572,5 @@ theorem ι_anti (a b : PlanarRookAlgebra n δ) : ι (a * b) = (ι b) * (ι a) :=
   rw[diagram_basis_mul]
   simp [PlanarRook.Diagram.ι_mul]
 
-
-end PlanarRookAlgebra
+end Algebra
+end PlanarRook
