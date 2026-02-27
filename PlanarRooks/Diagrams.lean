@@ -344,28 +344,11 @@ def through_index_of_mul_independent_of_right (d₁ : Diagram n m) (d₂ d₃ : 
 
 /-! ### Lemmata for proving associativity of multiplication
 -/
-def restate_mul₂ (d₁ : Diagram n m) (d₂ : Diagram m k) (x : d₁.left_defects)
-  (hx : ∃ (y : Fin m), d₁.bijection x = y ∧ y ∈ d₂.left_defects) :
-    x.val ∈ (d₁ * d₂).left_defects := by
-      simp only [hmul_left_defects, Finset.mem_filter, Finset.mem_univ, true_and]
-      rcases hx with ⟨y, hy⟩
-      use x.prop
-      rw [hy.1]
-      exact hy.2
 
 def restate_mul₃ (d₁ : Diagram n m) (d₂ : Diagram m k) (x : d₁.left_defects)
-  (y : Fin m)
-  (hx : d₁.bijection x = y ∧ y ∈ d₂.left_defects) :
-    ((d₁ * d₂).bijection ⟨x, Diagram.restate_mul₂ d₁ d₂ x ⟨y, hx⟩⟩)
-     = (⟨d₂.bijection ⟨y, hx.2⟩, by
-         simp only [hmul_right_defects, Finset.mem_filter, Finset.mem_univ, Subtype.coe_eta,
-           OrderIso.symm_apply_apply, SetLike.coe_mem, exists_const, true_and]
-         rw[←hx.1]
-         simp only [SetLike.coe_mem]
-      ⟩ : (d₁ * d₂).right_defects) := by
-       rcases hx with ⟨hx₁, hx₂⟩
-       simp only [← hx₁]
-       have xd₁d₂ : ↑x ∈ (d₁ * d₂).left_defects := by simp [hx₁, hx₂, x.prop]
+  (hxx : ↑(d₁.bijection x) ∈ d₂.left_defects) :
+    ((d₁ * d₂).bijection ⟨x, by simp [hxx]⟩) = (d₂.bijection ⟨_, hxx⟩ : Fin k) := by
+       have xd₁d₂ : ↑x ∈ (d₁ * d₂).left_defects := by simp [hxx, x.prop]
        let f := (d₁ * d₂).bijection
        let g : ↥(d₁ * d₂).left_defects ≃o ↥(d₁ * d₂).right_defects := {
           toFun := fun ⟨x, hx⟩ => ⟨d₂.bijection ⟨d₁.bijection
@@ -384,40 +367,21 @@ def restate_mul₃ (d₁ : Diagram n m) (d₂ : Diagram m k) (x : d₁.left_defe
        }
        have kk : ↑((d₁ * d₂).bijection ⟨x, xd₁d₂⟩) = f ⟨x, xd₁d₂⟩ := rfl
        rw [kk]
-       have kk : ⟨d₂.bijection ⟨↑(d₁.bijection x), by
-         rw [hx₁]
-         exact hx₂
-         ⟩, by simp ⟩ = g ⟨x, xd₁d₂⟩ := rfl
+       have kk : d₂.bijection ⟨↑(d₁.bijection x), hxx⟩ = ⟨g ⟨x, xd₁d₂⟩, by
+         apply Finset.mem_of_subset (mul_right_subset d₁ d₂)
+         simp
+         ⟩ := rfl
+       simp only [hmul_right_defects, hmul_left_defects]
        rw [kk]
        have kk : f = g := by rw [Subsingleton.elim f]
        rw [kk]
-
-def restate_mul₄ (d₁ : Diagram n m) (d₂ : Diagram m k) (x : d₂.right_defects)
-  (y : Fin m)
-  (hx : d₂.bijection.symm x = y ∧ y ∈ d₁.right_defects) :
-    x.val ∈ (d₁ * d₂).right_defects := by
-      simp only [hmul_right_defects, Finset.mem_filter, Finset.mem_univ, true_and]
-      rcases hx with ⟨y, hy⟩
-      use x.prop
-      rw [y]
-      exact hy
-
-def restate_mul₅ {n m k : ℕ}
-  (d₁ : Diagram n m)
-  (d₂ : Diagram m k)
-  (x : d₂.right_defects)
-  (y : Fin m)
-  (hx : d₂.bijection.symm x = y ∧ y ∈ d₁.right_defects) :
-    ((d₁ * d₂).bijection.symm ⟨x, Diagram.restate_mul₄ d₁ d₂ x y hx⟩)
-     = (⟨d₁.bijection.symm ⟨y, hx.2⟩, by
-       simp only [hmul_left_defects, Finset.mem_filter, Finset.mem_univ, Subtype.coe_eta,
-         OrderIso.apply_symm_apply, SetLike.coe_mem, exists_const, true_and]
-       rw [←hx.1]
        simp
-       ⟩ : (d₁ * d₂).left_defects) := by
-         rcases hx with ⟨hx₁, hx₂⟩
-         simp only [←hx₁]
-         have xd₁d₂ : ↑x ∈ (d₁ * d₂).right_defects := by simp [hx₁, hx₂, x.prop]
+
+def restate_mul₅ (d₁ : Diagram n m) (d₂ : Diagram m k) (x : d₂.right_defects)
+  (hx : ↑(d₂.bijection.symm x) ∈ d₁.right_defects) :
+    ((d₁ * d₂).bijection.symm ⟨x, by simp[hx]⟩)
+     = (⟨d₁.bijection.symm ⟨_, hx⟩, by simp⟩ : (d₁ * d₂).left_defects) := by
+         have xd₁d₂ : ↑x ∈ (d₁ * d₂).right_defects := by simp [hx, x.prop]
          let f := (d₁ * d₂).bijection.symm
          let g : ↥(d₁ * d₂).right_defects ≃o ↥(d₁ * d₂).left_defects := {
             toFun := fun ⟨y, hy⟩ => ⟨d₁.bijection.symm
@@ -436,10 +400,8 @@ def restate_mul₅ {n m k : ℕ}
          }
          have kk : ↑((d₁ * d₂).bijection.symm ⟨x, xd₁d₂⟩) = f ⟨x, xd₁d₂⟩ := rfl
          rw [kk]
-         have kk : ⟨↑(d₁.bijection.symm ⟨↑(d₂.bijection.symm x), by
-           rw [hx₁]
-           exact hx₂
-           ⟩), by simp⟩ = g ⟨x, xd₁d₂⟩ := rfl
+         have kk : ⟨↑(d₁.bijection.symm ⟨↑(d₂.bijection.symm x), by simp [hx]⟩), by simp⟩
+            = g ⟨x, xd₁d₂⟩ := rfl
          rw [kk]
          have kk : f = g := by rw [Subsingleton.elim f]
          rw [kk]
@@ -451,56 +413,51 @@ def mul_assoc (d₁ : Diagram n m) (d₂ : Diagram m k) (d₃ : Diagram k l) :
      apply Diagram.ext
      · rw[hmul_left_defects]
        ext x
+       simp only [hmul_right_defects, hmul_left_defects, Finset.mem_filter, Finset.mem_univ,
+         true_and]
        constructor
-       · intro h
-         simp only [Finset.mem_filter, Finset.mem_univ, true_and] at h
-         rcases h with ⟨ha, hb⟩
-         simp only [hmul_left_defects, Finset.mem_filter, Finset.mem_univ, true_and]
-         simp only [hmul_left_defects, Finset.mem_filter, Finset.mem_univ, true_and] at ha
-         rcases ha with ⟨hc, hd⟩
-         use hc
-         use hd
-         have kk:= Diagram.restate_mul₃ d₁ d₂ ⟨x, hc⟩ (d₁.bijection ⟨x, hc⟩) ⟨rfl, hd⟩
-         rw [kk] at hb
-         exact hb
-       · intro h
-         simp only [Finset.mem_filter, Finset.mem_univ, true_and]
-         simp only [hmul_left_defects, Finset.mem_filter, Finset.mem_univ, true_and] at h
-         rcases h with ⟨ha, hb⟩
-         rcases hb with ⟨hc, hd⟩
+       · simp only [forall_exists_index]
+         intro ha hb hc
+         use ha
+         use hb
+         have kk:= Diagram.restate_mul₃ d₁ d₂ ⟨x, ha⟩ hb
+         simp only [hmul_right_defects, hmul_left_defects] at kk
+         rw [kk] at hc
+         exact hc
+       · simp only [forall_exists_index]
+         intro ha hb hc
          constructor
-         · have kk := Diagram.restate_mul₃ d₁ d₂ ⟨x, ha⟩ (d₁.bijection ⟨x, ha⟩) ⟨rfl, hc⟩
+         · have kk := Diagram.restate_mul₃ d₁ d₂ ⟨x, ha⟩ hb
+           simp only [hmul_right_defects, hmul_left_defects] at kk
            rw [kk]
-           exact hd
+           exact hc
+         · use ha
      · rw[hmul_right_defects]
        ext x
+       simp only [hmul_right_defects, hmul_left_defects, Finset.mem_filter, Finset.mem_univ,
+         true_and]
        constructor
-       · simp only [hmul_right_defects, Finset.mem_filter, Finset.mem_univ, true_and,
-         hmul_left_defects, forall_exists_index]
+       · simp only [forall_exists_index]
          intro h ha hb
          use ⟨h, ha⟩
-         have kk := Diagram.restate_mul₅ d₂ d₃ ⟨x, h⟩ (d₃.bijection.symm ⟨x, h⟩) ⟨rfl, ha⟩
+         have kk := Diagram.restate_mul₅ d₂ d₃ ⟨x, h⟩ ha
          have kk₂ := SetCoe.ext_iff.mpr kk
          simp only [hmul_left_defects, hmul_right_defects] at kk₂
          rw [←kk₂] at hb
          exact hb
        · intro h
-         simp only [hmul_right_defects, hmul_left_defects, Finset.mem_filter, Finset.mem_univ,
-           true_and] at h
+         simp only at h
          rcases h with ⟨ha, hb⟩
-         simp only [Finset.mem_filter, Finset.mem_univ, true_and]
          rcases ha with ⟨hc, hd⟩
          use hc
-         simp only [hmul_right_defects, Finset.mem_filter, Finset.mem_univ, true_and]
          use hd
-         have kk := Diagram.restate_mul₅ d₂ d₃ ⟨x, hc⟩ (d₃.bijection.symm ⟨x, hc⟩)
-           ⟨rfl, hd⟩
+         have kk := Diagram.restate_mul₅ d₂ d₃ ⟨x, hc⟩ hd
          have kk₂ := SetCoe.ext_iff.mpr kk
          simp only [hmul_left_defects, hmul_right_defects] at kk₂
          rw [kk₂] at hb
          exact hb
 
-#eval (mul (example_1) (id 5)).act 4
+#eval ((example_1) * (id 5)).act 4
 
 end Diagram
 
