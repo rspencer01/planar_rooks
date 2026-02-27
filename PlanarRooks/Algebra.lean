@@ -397,8 +397,8 @@ is nonzero (and might as well be 1).
 -/
 def parameter_independence (n : ℕ) (δ₁ : k) (δ₁_nonzero : δ₁ ≠ 0) :
     (Algebra n δ₁) ≃ₐ[k] (Algebra n (1 : k)) := {
-      toFun := fun x => ∑ d , single 1 d (x d * (δ₁^ (n - d.through_index)))
-      invFun := fun y => ∑ d, single δ₁ d (y d / (δ₁^ (n - d.through_index)))
+      toFun := fun x => ∑ d , single 1 d (x d * (δ₁^ ((n : ℤ) - ↑d.through_index)))
+      invFun := fun y => ∑ d, single δ₁ d (y d / (δ₁^ ((n : ℤ) - ↑d.through_index)))
       left_inv := by
         intro x
         simp only [Finset.univ.sum_apply, single_apply, Finset.sum_ite_eq, Finset.mem_univ,
@@ -408,6 +408,7 @@ def parameter_independence (n : ℕ) (δ₁ : k) (δ₁_nonzero : δ₁ ≠ 0) :
           arg 2
           intro x₁
           arg 3
+          rw [←Int.ofNat_sub (Diagram.through_index_le_left _)]
           simp [δ₁_nonzero]
         }
         rw [←sum_single δ₁ x]
@@ -420,6 +421,7 @@ def parameter_independence (n : ℕ) (δ₁ : k) (δ₁_nonzero : δ₁ ≠ 0) :
           arg 2
           intro x₁
           arg 3
+          rw [←Int.ofNat_sub (Diagram.through_index_le_left _)]
           simp [δ₁_nonzero]
         }
         rw [←sum_single 1 x]
@@ -427,7 +429,7 @@ def parameter_independence (n : ℕ) (δ₁ : k) (δ₁_nonzero : δ₁ ≠ 0) :
         intro x y
         simp only [Finset.sum_mul_sum, mul_single_single]
         ring_nf
-        simp only [mul_assoc, ←pow_add]
+        simp only [mul_assoc]
         apply ext
         intro d
         simp only [Finset.sum_apply d, single_apply]
@@ -446,29 +448,33 @@ def parameter_independence (n : ℕ) (δ₁ : k) (δ₁_nonzero : δ₁ ≠ 0) :
         intro x₂ hx₂
         rw [ite_mul]
         by_cases h : d = x₁ * x₂
-        · simp[h]
+        · simp only [h, ↓reduceIte]
+          rw [←zpow_natCast]
+          rw [←Int.ofNat_sub (Diagram.through_index_le_left x₁)]
+          rw [←Int.ofNat_sub (Diagram.through_index_le_left x₂)]
           ring_nf
           conv => {
             rhs
             rw [mul_assoc]
             arg 2
-            rw [←pow_add]
+            rw [←zpow_add' (Or.inl δ₁_nonzero)]
           }
-          simp only [mul_assoc, ←pow_add, PlanarRook.Monoid.mul_exponent]
-          conv => {
-            lhs
-            arg 2
-            arg 2
-            rw [←Int.toNat_sub _ _]
-            rw [←Int.toNat_add (PlanarRook.Monoid.mul_exponent_ge_zero _ _)
-                 (sub_nonneg_of_le (Int.ofNat_le.mpr (PlanarRook.Diagram.through_index_le_left _)))]
-            unfold PlanarRook.Monoid.mul_exponent'
-            simp [sub_add_comm]
-            rw [Int.toNat_add (sub_nonneg_of_le
-              (Int.ofNat_le.mpr (PlanarRook.Diagram.through_index_le_left _)))
-                 (sub_nonneg_of_le (Int.ofNat_le.mpr (PlanarRook.Diagram.through_index_le_left _)))]
-            simp [add_comm]
-          }
+          simp only [mul_assoc, ←zpow_add' (Or.inl δ₁_nonzero)]
+          simp only [Monoid.mul_exponent, Finset.compl_union, Diagram.through_degree_of_mul,
+            mul_eq_mul_left_iff]
+          apply Or.inl
+          apply Or.inl
+          rw [Int.ofNat_sub (Diagram.through_index_le_left _)]
+          rw [Int.ofNat_sub (Diagram.through_index_le_left _)]
+          rw [←Finset.compl_union]
+          rw [Finset.cast_card_inter]
+          rw [Finset.compl_eq_univ_sdiff]
+          rw [Finset.cast_card_sdiff (Finset.subset_univ _)]
+          simp [Finset.card_univ]
+          ring_nf
+          rw[Diagram.through_index_eq_right]
+          rw[Diagram.through_index_eq_left]
+
         · simp [h, eq_comm]
       map_add' := by
         intro x y

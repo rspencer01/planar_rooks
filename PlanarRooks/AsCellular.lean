@@ -184,5 +184,5 @@ noncomputable instance : CellularAlgebra k (PlanarRook.Algebra n δ) where
           (PlanarRook.Diagram.mk s.val t.val (by simp [s.prop, t.prop]))
           (PlanarRook.Diagram.mk s.val s.val rfl) (by simp)]
       apply lt_of_le_of_ne _ h
-      apply (PlanarRook.Monoid.mul_not_increase_through_degree _ _).trans
+      apply (PlanarRook.Diagram.mul_not_increase_through_degree _ _).trans
       simp[PlanarRook.Diagram.through_index, s.prop]

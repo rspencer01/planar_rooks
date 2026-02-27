@@ -10,6 +10,7 @@ import Mathlib.Data.Finset.Sort
 import Mathlib.Data.Finset.BooleanAlgebra
 import Mathlib.Data.Fintype.Basic
 import Mathlib.Data.Finset.Max
+import Mathlib.Data.Set.Defs
 import Mathlib.CategoryTheory.Category.Basic
 import Mathlib.CategoryTheory.ConcreteCategory.Basic
 import Mathlib.Algebra.Field.Basic
@@ -30,6 +31,7 @@ import Mathlib.Data.FunLike.Fintype
 import Mathlib.Order.Defs.PartialOrder
 import Mathlib.Data.Finset.Filter
 import Mathlib.Order.Hom.Set
+import Mathlib.Data.Finset.CastCard
 import Mathlib.Order.Fin.Basic
 import Mathlib.Logic.Equiv.Defs
 
@@ -163,6 +165,9 @@ def through_index_of_iso (k : ℕ)
   (s₁ : {S : Finset (Fin n) // S.card = k}) (s₂ : {S : Finset (Fin m) // S.card = k}) :
   through_index (Diagram.pi_iso.symm ⟨k, (s₁, s₂)⟩) = k := by
     simp [through_index, Diagram.pi_iso, s₁.property]
+
+theorem through_index_eq_left (d : Diagram n m) :
+  d.through_index = d.left_defects.card := rfl
 
 theorem through_index_eq_right (d : Diagram n m) :
   d.through_index = d.right_defects.card := d.consistant
@@ -338,6 +343,39 @@ def mul_left_subset (d₁ : Diagram n m) (d₂ : Diagram m k) :
     simp only [hmul_left_defects, Finset.mem_filter, Finset.mem_univ, true_and] at hx
     exact hx.choose
 
+/-! ## Through degree of multiplication
+-/
+
+theorem through_degree_of_mul (d₁ : Diagram n m) (d₂ : Diagram m k) :
+  (d₁ * d₂).through_index = Finset.card (d₁.right_defects ∩ d₂.left_defects) := by
+    unfold through_index
+    apply Finset.card_bij'
+      (s := (d₁ * d₂).left_defects)
+      (i := fun a ha => by simp at ha; exact ↑(d₁.bijection ⟨a, ha.choose⟩))
+      (j := fun a ha => d₁.bijection.symm ⟨a, Finset.mem_of_mem_inter_left ha⟩)
+    · intro a ha
+      simp
+    · intro a ha
+      simp
+    · intro a ha
+      simp at ha
+      simp [ha.choose_spec]
+    · intro a ha
+      simp[Finset.mem_of_mem_inter_right ha]
+
+/-- Multiplication does not increase the through degree of either diagram. -/
+theorem mul_not_increase_through_degree (d₁ : Diagram n m) (d₂ : Diagram m k) :
+  (d₁ * d₂).through_index ≤ min d₁.through_index d₂.through_index := by
+    unfold Diagram.through_index
+    simp only [le_inf_iff]
+    constructor
+    · apply Finset.card_le_card
+      exact Diagram.mul_left_subset _ _
+    · rw[PlanarRook.Diagram.consistant]
+      rw[PlanarRook.Diagram.consistant]
+      apply Finset.card_le_card
+      exact Diagram.mul_right_subset _ _
+
 def through_index_of_mul_independent_of_right (d₁ : Diagram n m) (d₂ d₃ : Diagram m k)
   (h : d₂.left_defects = d₃.left_defects) : (d₁ * d₂).through_index = (d₁ * d₃).through_index := by
     rw [through_index, through_index, mul_left_of_right_arbitrary d₂ d₃ h]
@@ -477,22 +515,6 @@ namespace Monoid
 
 theorem one_def {n : ℕ} : (1 : Diagram n n) = Diagram.id n := by rfl
 
-/-! ## Through degree of multiplication
--/
-
-/-- Multiplication does not increase the through degree of either diagram. -/
-theorem mul_not_increase_through_degree (d₁ : Diagram n m) (d₂ : Diagram m k) :
-  (d₁ * d₂).through_index ≤ min d₁.through_index d₂.through_index := by
-    unfold Diagram.through_index
-    simp only [le_inf_iff]
-    constructor
-    · apply Finset.card_le_card
-      exact Diagram.mul_left_subset _ _
-    · rw[PlanarRook.Diagram.consistant]
-      rw[PlanarRook.Diagram.consistant]
-      apply Finset.card_le_card
-      exact Diagram.mul_right_subset _ _
-
 /-! ## The twist factor in the monoid
 
 There is a natural number that arises when multiplying two diagrams,
@@ -501,110 +523,39 @@ resulting diagram. This can be used when defining `PlanarRook.Algebra` to determ
 "twist": the power of `δ` that appears. Here we collate some results about this number.
 -/
 
-/-- When multiplying two diagrams, we are left with a number of disconnected
-components. The number of these is the exponent in the planar rook algebra's
-multiplication.
--/
-def mul_exponent' (d₁ : Diagram n m) (d₂ : Diagram m k) : ℤ :=
-  m - d₁.through_index - d₂.through_index + (d₁ * d₂).through_index
-
-theorem mul_exponent_is_stubs' (d₁ : Diagram n m) (d₂ : Diagram m k) :
-  PlanarRook.Monoid.mul_exponent' d₁ d₂ =
-    Finset.card {x | x ∈ (d₁.right_defects ∪ d₂.left_defects)ᶜ} := by
-      have h : (d₁ * d₂).through_index = (d₁.right_defects ∩ d₂.left_defects).card := by
-        unfold Diagram.through_index
-        simp only [Diagram.hmul_left_defects]
-        apply Finset.card_bij' (α := Fin n) (β := Fin m) (i := fun a ha => d₁.bijection ⟨a, by
-            simp only [Finset.mem_filter, Finset.mem_univ, true_and] at ha
-            rcases ha with ⟨haa, hab⟩
-            exact haa
-            ⟩) (j := fun b hb => d₁.bijection.symm ⟨b, by
-            simp only [Finset.mem_inter] at hb
-            rcases hb with ⟨hba, hbb⟩
-            exact hba
-            ⟩)
-        · intro a ha
-          simp
-        · intro a ha
-          simp
-        · intro a ha
-          simp only [Finset.mem_inter, SetLike.coe_mem, true_and]
-          simp only [Finset.mem_filter, Finset.mem_univ, true_and] at ha
-          rcases ha with ⟨haa, hab⟩
-          exact hab
-        · intro a ha
-          simp
-          simp [Finset.mem_inter.mp ha]
-      unfold PlanarRook.Monoid.mul_exponent'
-      rw [h]
-      rw [Diagram.through_index_eq_right]
-      rw [Diagram.through_index]
-      have h₂ : Finset.card {x | x ∈ (d₁.right_defects ∪ d₂.left_defects)ᶜ} =
-         (d₁.right_defects ∪ d₂.left_defects)ᶜ.card := by
-        apply Finset.card_bij' (α := Fin m) (β := Fin m)
-          (i := fun a ha => a)
-          (j := fun b hb => b)
-        · intro a ha
-          simp at ha
-          simp [ha]
-        · intro b hb
-          simp at hb
-          simp [hb]
-        · intro a ha
-          rfl
-        · intro b hb
-          rfl
-      rw [h₂]
-      rw [Finset.card_compl]
-      conv => {
-        rhs
-        rw [Nat.cast_sub (by
-          apply Finset.card_le_univ
-        )]
-      }
-      rw [Finset.card_union]
-      conv => {
-        rhs
-        rw [Nat.cast_sub (by
-          rw [Finset.card_inter]
-          simp
-        )]
-      }
-      simp
-      ring
-
 def mul_exponent (d₁ : Diagram n m) (d₂ : Diagram m k) : ℕ :=
-    Int.toNat (Monoid.mul_exponent' d₁ d₂)
+  Finset.card (d₁.right_defects ∪ d₂.left_defects)ᶜ
+
+theorem mul_exponent' (d₁ : Diagram n m) (d₂ : Diagram m k) :
+  ((mul_exponent d₁ d₂) : ℤ) = m - d₁.through_index - d₂.through_index + (d₁ * d₂).through_index
+  := by
+  unfold mul_exponent
+  simp only [Finset.compl_eq_univ_sdiff, Finset.subset_univ, Finset.cast_card_sdiff,
+    Finset.card_univ, Fintype.card_fin, Finset.cast_card_union, Diagram.through_degree_of_mul]
+  rw [Diagram.through_index_eq_right d₁, Diagram.through_index_eq_left]
+  ring_nf
 
 /-- The identity diagram invokes zero twist when multiplied on the right. -/
 def mul_exponent_eq_zero_of_id (d : Diagram n m) :
-  Monoid.mul_exponent d (Diagram.id m) = 0 := by
-    simp only [Monoid.mul_exponent, Monoid.mul_exponent']
-    simp only [Diagram.mul_id]
-    simp [Diagram.through_index_of_id]
+  Monoid.mul_exponent d (Diagram.id m) = 0 := by simp [Monoid.mul_exponent, Diagram.id]
 
 /-- The identity diagram invokes zero twist when multiplied on the left. -/
 def mul_exponent_eq_zero_of_id' (d : Diagram n m) :
-  PlanarRook.Monoid.mul_exponent (Diagram.id n) d = 0 := by
-    simp only [Monoid.mul_exponent, Monoid.mul_exponent']
-    simp only [Diagram.id_mul]
-    simp [Diagram.through_index_of_id]
+  PlanarRook.Monoid.mul_exponent (Diagram.id n) d = 0 := by simp [Monoid.mul_exponent, Diagram.id]
 
 /-- The twist is additive over associated multipliation as an integer. -/
 def mul_exponent_assoc' (d₁ : Diagram n m) (d₂ : Diagram m k) (d₃ : Diagram k l) :
-  PlanarRook.Monoid.mul_exponent' d₁ d₂ +
-  PlanarRook.Monoid.mul_exponent' (d₁ * d₂) d₃ =
-  PlanarRook.Monoid.mul_exponent' d₁ (d₂ * d₃) +
-  PlanarRook.Monoid.mul_exponent' d₂ d₃ := by
-    unfold PlanarRook.Monoid.mul_exponent'
+  ((PlanarRook.Monoid.mul_exponent d₁ d₂) : ℤ) +
+  ((PlanarRook.Monoid.mul_exponent (d₁ * d₂) d₃) : ℤ) =
+  ((PlanarRook.Monoid.mul_exponent d₁ (d₂ * d₃)) : ℤ) +
+  ((PlanarRook.Monoid.mul_exponent d₂ d₃) : ℤ) := by
+    rw [mul_exponent', mul_exponent', mul_exponent', mul_exponent']
+    ring_nf
     rw[Diagram.mul_assoc]
-    ring
 
 /-- The twist is non-negative. -/
 def mul_exponent_ge_zero (d₁ : Diagram n m) (d₂ : Diagram m k) :
-  0 ≤ PlanarRook.Monoid.mul_exponent' d₁ d₂ := by
-    rw [PlanarRook.Monoid.mul_exponent_is_stubs' d₁ d₂]
-    simp
+  0 ≤ mul_exponent d₁ d₂ := by unfold mul_exponent; simp
 
 /-- The twist is additive over associated multiplication as a natural number. -/
 def mul_exponent_assoc (d₁ : Diagram n m) (d₂ : Diagram m k) (d₃ : Diagram k l) :
@@ -612,19 +563,13 @@ def mul_exponent_assoc (d₁ : Diagram n m) (d₂ : Diagram m k) (d₃ : Diagram
   Monoid.mul_exponent (d₁ * d₂) d₃ =
   PlanarRook.Monoid.mul_exponent d₁ (d₂ * d₃) +
   PlanarRook.Monoid.mul_exponent d₂ d₃ := by
-    unfold PlanarRook.Monoid.mul_exponent
-    rw [←Int.toNat_add (PlanarRook.Monoid.mul_exponent_ge_zero _ _)
-                       (PlanarRook.Monoid.mul_exponent_ge_zero _ _)]
-    rw [←Int.toNat_add (PlanarRook.Monoid.mul_exponent_ge_zero _ _)
-                       (PlanarRook.Monoid.mul_exponent_ge_zero _ _)]
-    rw [PlanarRook.Monoid.mul_exponent_assoc']
+    apply (Nat.cast_inj (R:=ℤ)).mp
+    simp [PlanarRook.Monoid.mul_exponent_assoc']
 
 def mul_exponent_of_right_arbitrary (d₁ : Diagram n m) (d₂ d₃ : Diagram m k)
   (h₁ : d₂.left_defects = d₃.left_defects) :
   Monoid.mul_exponent d₁ d₂ = Monoid.mul_exponent d₁ d₃ := by
     unfold mul_exponent
-    rw [mul_exponent_is_stubs']
-    rw [mul_exponent_is_stubs']
     rw [h₁]
 
 end Monoid
@@ -647,12 +592,10 @@ def Diagram.ι_involutive {n m : ℕ} (d : Diagram n m) :
     · simp [Diagram.ι]
     · simp [Diagram.ι]
 
-instance {n : ℕ} : Function.Involutive (α := Diagram n n) Diagram.ι :=
-  Diagram.ι_involutive
+instance : Function.Involutive (α := Diagram n n) Diagram.ι := Diagram.ι_involutive
 
-def Diagram.ι_bijection {n m : ℕ} (d : Diagram n m) :
-  d.ι.bijection = d.bijection.symm :=
-     Subsingleton.elim _ _
+def Diagram.ι_bijection (d : Diagram n m) : d.ι.bijection = d.bijection.symm :=
+  Subsingleton.elim _ _
 
 /-- The involution reverses the order of multiplication. -/
 def Diagram.ι_mul {n m k : ℕ} (d₁ : Diagram n m) (d₂ : Diagram m k) :
@@ -683,12 +626,7 @@ theorem Monoid.ι_through_index (d : Diagram n m) :
 @[simp]
 theorem Monoid.mul_exponent_of_ι (d₁ : Diagram n m) (d₂ : Diagram m k) :
   Monoid.mul_exponent d₂.ι d₁.ι = Monoid.mul_exponent d₁ d₂ := by
-    simp only [Monoid.mul_exponent, Monoid.mul_exponent']
-    rw[←Diagram.ι_mul]
-    rw[Monoid.ι_through_index (d₁ * d₂)]
-    rw[Monoid.ι_through_index d₁]
-    rw[Monoid.ι_through_index d₂]
-    ring_nf
+    simp [Monoid.mul_exponent,Diagram.ι,Finset.inter_comm]
 
 def Diagram.ι_of_iso {n m : ℕ}
   (k : ℕ)
