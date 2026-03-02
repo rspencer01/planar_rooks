@@ -385,9 +385,7 @@ instance is_algebra (δ : k) :
     · simp [h]
 }
 
-theorem algebra_map :
-  algebraMap k (Algebra n δ) = single_one_ring_hom δ :=
-  rfl
+theorem algebra_map : algebraMap k (Algebra n δ) = single_one_ring_hom δ := rfl
 
 /-- The planar rook algebra is independent of the parameter δ, up to algebra isomorphism, as long as
 it is not zero.
@@ -507,7 +505,7 @@ theorem diagram_basis_mul (a b : PlanarRook.Diagram n n) :
     unfold single at q
     simp[q]
 
-instance diagram_basis' :
+def diagram_basis' :
   Module.Basis
     (Σ μ : Fin (n + 1), {S : Finset (Fin n) // S.card = μ} × {S : Finset (Fin n) // S.card = μ})
     k (Algebra n δ) :=

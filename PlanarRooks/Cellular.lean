@@ -374,7 +374,7 @@ noncomputable instance : AddCommGroup (cell_module k A μ) :=
 noncomputable instance : Module k (cell_module k A μ) :=
   inferInstanceAs (Module k (cellular.tableau μ →₀ k))
 
-noncomputable instance cell_module_basis (μ : cellular.Λ) :
+noncomputable def cell_module_basis (μ : cellular.Λ) :
   Module.Basis (cellular.tableau μ) k (cell_module k A μ) := {
   repr := LinearEquiv.refl k (CellularAlgebra.tableau μ →₀ k)
 }

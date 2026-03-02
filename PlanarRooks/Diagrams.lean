@@ -592,7 +592,7 @@ def Diagram.ι_involutive {n m : ℕ} (d : Diagram n m) :
     · simp [Diagram.ι]
     · simp [Diagram.ι]
 
-instance : Function.Involutive (α := Diagram n n) Diagram.ι := Diagram.ι_involutive
+def Diagram.ι_Involutive : Function.Involutive (α := Diagram n n) Diagram.ι := Diagram.ι_involutive
 
 def Diagram.ι_bijection (d : Diagram n m) : d.ι.bijection = d.bijection.symm :=
   Subsingleton.elim _ _
