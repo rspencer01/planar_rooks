@@ -13,9 +13,6 @@ This module is almost exactly the same as `Mathlib.Data.Finsupp.Defs` but uses `
 instead of `Finite` to make certain equivalences computable.
 -/
 
-
-variable [DecidableEq k]
-
 variable {α M : Type*} [Fintype α] [DecidableEq M] [Zero M]
 
 @[simps]
@@ -29,7 +26,6 @@ theorem equivFunOnFinite_symm_coe (f : α →₀ M) : equivFunOnFinite.symm f = 
 
 @[simp]
 lemma coe_equivFunOnFinite_symm (f : α → M) : ⇑(equivFunOnFinite.symm f) = f := rfl
-
 
 @[simp]
 theorem equivFunOnFinite_single [DecidableEq α] (x : α) (m : M) :

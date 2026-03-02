@@ -34,10 +34,11 @@ This is an incomplete list of things that need to be done.
  * [x] The involution
  * [x] Independence on the parameter
 
-#### Cellular Algebras
+#### Cellular Algebras Definitions
  * [x] Defintions of cellular algebras
- * [ ] Structure of cellular algebras
- * [ ] Statements of results in cellular algebras
+ * [x] Structure of cellular algebras
+ * [ ] Cell modules for cellular algebras
+ * [ ] Simple modules for cellular algebras
 
 #### Representation theory of Planar Rook Algebras
  * [x] Proof of cellularity

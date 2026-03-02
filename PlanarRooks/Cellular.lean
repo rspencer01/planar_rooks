@@ -9,12 +9,17 @@ import Mathlib.LinearAlgebra.LinearIndependent.Defs
 import Mathlib.LinearAlgebra.Quotient.Defs
 import Mathlib.LinearAlgebra.SModEq.Basic
 import Mathlib.RingTheory.Ideal.Quotient.Defs
+import Mathlib.LinearAlgebra.LinearIndependent.Basic
 import Mathlib.LinearAlgebra.Basis.Defs
 import Mathlib.Algebra.Quotient
 import Mathlib.RingTheory.SimpleModule.Basic
 import Mathlib.LinearAlgebra.SModEq.Basic
 import Mathlib.LinearAlgebra.Basis.Basic
+import Mathlib.LinearAlgebra.Basis.Basic
+import Mathlib.LinearAlgebra.Basis.Submodule
+import Mathlib.LinearAlgebra.Dimension.Constructions
 import Mathlib.LinearAlgebra.Finsupp.LinearCombination
+import PlanarRooks.Basis
 
 /-! # Cellular algebras
 
@@ -383,15 +388,128 @@ def cellular_action_is {μ} (a : A) (x : cell_module k A μ) :
     x := rfl
 
 
---disable notation
+namespace CellularAlgebra
+
+theorem some_linear_independence {f₁ f₂ : cellular.tableau μ → k} :
+  ∑ u, (f₁ u) • c ⟨μ, (u, t)⟩ ≡ ∑ u, (f₂ u) • c ⟨μ, (u, t)⟩ [SMOD A[<μ]] → f₁ = f₂ := by
+  intro h
+  funext x
+  rw [SModEq.def] at h
+  rw [←Submodule.mkQ_apply] at h
+  rw [←Submodule.mkQ_apply] at h
+  rw [map_sum] at h
+  rw [map_sum] at h
+  simp only [LinearMap.map_smul_of_tower, Submodule.mkQ_apply] at h
+  have tt := (linearIndepOn_union_iff_quotient (R:=k) (s := Sigma.fst ⁻¹' {ν | ν < μ})
+    (t := Sigma.fst ⁻¹' {μ}) (f:= c) (Disjoint.preimage _ (by simp))).mp
+    (Module.Basis.linearIndepOn c _)
+  have tt := tt.2
+  have uv := LinearIndepOn.comp_of_image (v := A[<μ].mkQ ∘ c) (f := fun x => ⟨μ, (x, t)⟩)
+    (s := Set.univ) (h := LinearIndepOn.mono tt (by
+    simp only [Set.image_univ]
+    intro x
+    simp only [Set.mem_range, Set.mem_preimage, Set.mem_singleton_iff, forall_exists_index]
+    intro x₁ h₁
+    rw[←h₁]
+    )) (by simp [Function.Injective])
+  have tuw := linearIndepOn_univ.mp uv
+  have tjj := LinearIndepOn.linearIndependent tt
+  simp at tjj
+  have jj := (linearIndependent_iff'ₛ (v:= fun x => A[<μ].mkQ (c ⟨μ, (x, t)⟩))).mp tuw _ f₁ f₂ h
+  simp only [Finset.mem_univ, forall_const] at jj
+  exact jj x
+
+
+def r_of_mul (a₁ a₂ : A) (μ : cellular.Λ) (s t : cellular.tableau μ) (u : tableau μ) : (r A μ s u)
+  (a₁ * a₂) = ∑ x, (r A μ s x) a₂ * (r A μ x u) a₁ := by
+  have k₁ := cellular.multiplication_rule A (a₁ * a₂) μ s t
+  have k₂ := cellular.multiplication_rule A a₂ μ s t
+  have h₁ := SModEq.sub_mem.mp k₁
+  have h₂ := SModEq.sub_mem.mp k₂
+  have foo {a : A} {x}: x ∈ tableau_linear_span A (CellularAlgebra.Λ (k:= k) A) {ν | ν < μ}
+    CellularAlgebra.tableau CellularAlgebra.c → a * x ∈ tableau_linear_span A
+      (CellularAlgebra.Λ (k:= k) A) {ν | ν < μ} CellularAlgebra.tableau CellularAlgebra.c :=
+        Submodule.smul_mem (subcelluar_ideal A μ) a
+  have q := foo (a := a₁) h₂
+  rw [mul_sub a₁] at q
+  have rr := SModEq.sub_mem.mpr q
+  rw [←mul_assoc] at rr
+  have tp := k₁.symm.trans rr
+  rw [Finset.mul_sum] at tp
+  have tt := cellular.multiplication_rule A a₁ μ s
+  conv at tp => {
+    rhs
+    arg 2
+    ext s
+    rw [Algebra.mul_smul_comm]
+    arg 2
+  }
+  have h : ∀ i ∈ Finset.univ, (r A μ s i) a₂ • (a₁ * c ⟨μ, (i, t)⟩) ≡
+    (r A μ s i) a₂ • ∑ j, (r A μ i j) a₁ • c ⟨μ, (j, t)⟩ [SMOD tableau_span A {ν | ν < μ} ] := by
+    intro i hi
+    apply SModEq.smul
+    exact cellular.multiplication_rule _ _ _ _ _
+  have kk := SModEq.sum (h )
+  have ki {t' : tableau μ}:= tp.trans (kk )
+  conv at ki => {
+    ext t'
+    rhs
+    arg 2
+    ext i
+    rw [Finset.smul_sum]
+  }
+  rw [Finset.sum_comm] at ki
+  conv at ki => {
+    ext t'
+    rhs
+    arg 2
+    ext i
+    arg 2
+    ext j
+    rw [←smul_assoc]
+  }
+  conv at ki => {
+    ext t'
+    rhs
+    arg 2
+    ext i
+    rw [←Finset.univ.sum_smul]
+  }
+  have qq := some_linear_independence k A (ki (t':=t))
+  simp only [smul_eq_mul] at qq
+  have qq := funext_iff.mp qq
+  exact qq _
+
+end CellularAlgebra
+
 noncomputable instance cell_module_module (μ : cellular.Λ) : Module A (cell_module k A μ) where
   mul_smul := by
     intro x y b
-    unfold HSMul.hSMul
-    unfold instHSMul
-    simp only
-    unfold SMul.smul
-    sorry
+    simp only [cellular_action_is k A, Module.Basis.constr_apply_fintype,
+      Module.Basis.equivFun_apply, map_sum, map_smul, Module.Basis.equivFun_self, ite_smul,
+      one_smul, zero_smul, Finset.sum_ite_eq, Finset.mem_univ, ↓reduceIte]
+    apply Finset.sum_congr rfl
+    intro x₁ hx₁
+    apply congr_arg
+    conv => {
+      lhs
+      arg 2
+      ext u
+      rw [CellularAlgebra.r_of_mul k A x y μ x₁ u u]
+    }
+    conv => {
+      rhs
+      arg 2
+      ext x_1
+      rw [Finset.smul_sum]
+    }
+    conv => {
+      rhs
+      rw[Finset.sum_comm]
+    }
+    apply Finset.sum_congr rfl
+    intro x₂ hx₂
+    simp [smul_smul, Finset.sum_smul]
   one_smul := by
     intro b
     unfold HSMul.hSMul
@@ -408,7 +526,6 @@ noncomputable instance cell_module_module (μ : cellular.Λ) : Module A (cell_mo
     simp only
     unfold SMul.smul
     simp only [cellular_action]
-    have k {s u} : cellular.r A μ s u (a + b) = cellular.r A μ s u a + cellular.r A μ s u b := sorry
     conv => {
       lhs
       arg 1
@@ -416,7 +533,7 @@ noncomputable instance cell_module_module (μ : cellular.Λ) : Module A (cell_mo
       ext s
       arg 2
       ext u
-      rw [k]
+      rw [map_add]
     }
     simp only [ Module.Basis.constr_apply_fintype, Module.Basis.equivFun_apply]
     rw[←Finset.sum_add_distrib]
