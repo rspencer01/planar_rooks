@@ -53,7 +53,7 @@ in this instance.
 
 Note: This could probably be made more general for arbitrary fintypes.
 -/
-instance diagram_basis [DecidableEq k] : Module.Basis (Diagram n n) k (Algebra n δ) := {
+def diagram_basis [DecidableEq k] : Module.Basis (Diagram n n) k (Algebra n δ) := {
     repr := {
       toFun := equivFunOnFinite.symm
       invFun := equivFunOnFinite.toFun
