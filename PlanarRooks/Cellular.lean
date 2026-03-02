@@ -44,16 +44,16 @@ are tableaux of shape $\mu$.
 We express it here as the preimage of the set $S$ under the map from all triples ${}^\mu_{s_1, s_2}$
 to their weight $\mu$.
 -/
-def double_tableaux_in (Λ : Type) (S : Set Λ) (tableau : Λ → Type) :
+def double_tableaux_in {Λ : Type} (S : Set Λ) (tableau : Λ → Type) :
   Set (Σ μ : Λ, tableau μ × tableau μ) := Sigma.fst⁻¹' S
 
 /-- Increasing the set of weights increases the set of all double-tableaux. -/
 lemma double_tableaux_in_mono {Λ : Type} {S₁ S₂ : Set Λ} {tableau : Λ → Type} (h : S₁ ⊆ S₂) :
-  double_tableaux_in Λ S₁ tableau ⊆ double_tableaux_in Λ S₂ tableau := Set.preimage_mono h
+  double_tableaux_in S₁ tableau ⊆ double_tableaux_in S₂ tableau := Set.preimage_mono h
 
-def all_tableaux_range (Λ : Type) (S : Set Λ) (tableau : Λ → Type)
+def all_tableaux_range {Λ : Type} (S : Set Λ) {tableau : Λ → Type}
   (c : Module.Basis (ι := Σ μ : Λ, tableau μ × tableau μ) k A) :=
-     c '' double_tableaux_in Λ S tableau
+     c '' double_tableaux_in S tableau
 
 /-- The `k`-linear span of a subset of tableaux.
 
@@ -61,9 +61,12 @@ When this is a subset of weights closed under the partial order, we will show ta
 two-sided ideal of the cellular algebra. However, we need a definition now so that we can talk
 about the multiplication rule for the basis elements.
 -/
-def tableau_linear_span (Λ : Type) (S : Set Λ) (tableau : Λ → Type)
+def tableau_linear_span {A : Type} [Ring A] [Algebra k A] {Λ : Type} (S : Set Λ) {tableau : Λ → Type}
   (c : Module.Basis (ι := Σ μ : Λ, tableau μ × tableau μ) k A)
-  : Submodule k A := Submodule.span k (all_tableaux_range A Λ S tableau c)
+  : Submodule k A := Submodule.span k (all_tableaux_range A S c)
+
+
+notation:50  c "over" S  => tableau_linear_span S c
 
 /-- An anti-involution is a linear involution that reverses the order of multiplication.
 -/
@@ -95,7 +98,7 @@ class CellularAlgebra (k : Type) [Field k] (A : Type) [Ring A] [Algebra k A] whe
   (r_basis : (Σ ν : Λ, tableau ν × tableau ν) → (μ : Λ) → tableau μ → tableau μ → k)
   (multiplication_rule_basis : ∀ (a : Σ μ : Λ, tableau μ × tableau μ) (μ : Λ) (s t : tableau μ),
     (c a) * (c ⟨μ, (s, t)⟩) ≡ ∑ (u : tableau μ), r_basis a μ s u • (c ⟨μ, (u, t)⟩)
-      [SMOD tableau_linear_span A Λ {ν : Λ | ν < μ} tableau c]
+      [SMOD c over {ν : Λ | ν < μ} ]
   )
 
 variable [cellular : CellularAlgebra k A]
@@ -119,7 +122,7 @@ namespace CellularAlgebra
 $S$.
 -/
 def tableau_span (S : Set cellular.Λ) : Submodule k A :=
-  tableau_linear_span A cellular.Λ S cellular.tableau cellular.c
+  tableau_linear_span S cellular.c
 
 /-! ## Unfolding some linear maps
 
@@ -175,7 +178,7 @@ def tableau_span_mono' (S₁ S₂ : Set cellular.Λ) (h : S₁ ⊂ S₂) :
       let t : tableau q × tableau q := Inhabited.default
       have kk := (k₁ (c ⟨q, t⟩)).mpr
       rw[all_tableaux_range] at kk
-      have q : c ⟨q, t⟩ ∈ Submodule.span k (all_tableaux_range A _ S₂ tableau c) := by
+      have q : c ⟨q, t⟩ ∈ Submodule.span k (all_tableaux_range A S₂ c) := by
         apply Submodule.mem_span_of_mem
         unfold all_tableaux_range
         unfold double_tableaux_in
@@ -426,9 +429,9 @@ def r_of_mul (a₁ a₂ : A) (μ : cellular.Λ) (s t : cellular.tableau μ) (u :
   have k₂ := cellular.multiplication_rule A a₂ μ s t
   have h₁ := SModEq.sub_mem.mp k₁
   have h₂ := SModEq.sub_mem.mp k₂
-  have foo {a : A} {x}: x ∈ tableau_linear_span A (CellularAlgebra.Λ (k:= k) A) {ν | ν < μ}
-    CellularAlgebra.tableau CellularAlgebra.c → a * x ∈ tableau_linear_span A
-      (CellularAlgebra.Λ (k:= k) A) {ν | ν < μ} CellularAlgebra.tableau CellularAlgebra.c :=
+  have foo {a : A} {x}: x ∈ tableau_linear_span {ν | ν < μ}
+     CellularAlgebra.c → a * x ∈ tableau_linear_span
+       {ν | ν < μ} CellularAlgebra.c :=
         Submodule.smul_mem (subcelluar_ideal A μ) a
   have q := foo (a := a₁) h₂
   rw [mul_sub a₁] at q
