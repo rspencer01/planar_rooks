@@ -160,8 +160,7 @@ noncomputable instance : CellularAlgebra k (PlanarRook.Algebra n δ) where
       }
       have q (d : PlanarRook.Diagram n n) (h₁ : d.through_index < ↑μ ) :
         (PlanarRook.Algebra.diagram_basis δ) d ∈
-        tableau_linear_span (PlanarRook.Algebra n δ) (Fin (n + 1)) {ν | ν < μ}
-        (fun k ↦ { S : Finset (Fin n) // S.card = ↑k })
+        tableau_linear_span {ν | ν < μ}
         ((PlanarRook.Algebra.diagram_basis δ).reindex PlanarRook.Diagram.pi_iso₂) := by
           unfold tableau_linear_span
           apply Submodule.mem_span_of_mem

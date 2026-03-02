@@ -65,7 +65,6 @@ def tableau_linear_span {A : Type} [Ring A] [Algebra k A] {Λ : Type} (S : Set �
   (c : Module.Basis (ι := Σ μ : Λ, tableau μ × tableau μ) k A)
   : Submodule k A := Submodule.span k (all_tableaux_range A S c)
 
-
 notation:50  c "over" S  => tableau_linear_span S c
 
 /-- An anti-involution is a linear involution that reverses the order of multiplication.
@@ -121,8 +120,7 @@ namespace CellularAlgebra
 /-- The subspace of $A$ spanned by the basis elements corresponding to tableaux of weights in a set
 $S$.
 -/
-def tableau_span (S : Set cellular.Λ) : Submodule k A :=
-  tableau_linear_span S cellular.c
+def tableau_span (S : Set cellular.Λ) : Submodule k A := cellular.c over S
 
 /-! ## Unfolding some linear maps
 
