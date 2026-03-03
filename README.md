@@ -1,4 +1,4 @@
-![](./docs/header.svg)
+![](./static/header.svg)
 
 <div style="text-align:center">
 
