@@ -730,7 +730,7 @@ def cell_module_form_contravariant (μ : cellular.Λ) (a : A) (x y : cell_module
   sorry
 
 def cell_module_radical (μ : cellular.Λ) : Submodule A (cell_module k A μ) := {
-  carrier := {x | ∀ y, cell_module_form k A μ x y = 0},
+  carrier := {x | ∀ y, cell_module_form k A x y = 0},
   add_mem' := by
     intro x₁ x₂ hx₁ hx₂
     simp only [Set.mem_setOf_eq] at hx₁ hx₂
