@@ -55,24 +55,12 @@ namespace PlanarRook
 /-- A planar rook diagram with n left vertices and m right vertices is given by
     specifying which left and right vertices are "defects" (connected to eachother)
 -/
+@[ext]
 structure Diagram (n m : ℕ) where
   (left_defects : Finset (Fin n))
   (right_defects : Finset (Fin m))
   (consistant: left_defects.card = right_defects.card)
 deriving DecidableEq
-
-@[ext]
-theorem Diagram.ext {n m : ℕ}
-  {d₁ d₂ : Diagram n m}
-  (h₁ : d₁.left_defects = d₂.left_defects)
-  (h₂ : d₁.right_defects = d₂.right_defects) :
-  d₁ = d₂ :=
-by
-  cases d₁
-  cases d₂
-  cases h₁
-  cases h₂
-  rfl
 
 namespace Diagram
 
