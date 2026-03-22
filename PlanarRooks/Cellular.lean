@@ -308,6 +308,7 @@ theorem ι_on_basis (μ : cellular.Λ) (s t : cellular.tableau μ) :
 /-- Cellular algebras are equipped with an involution, which is the linear map that swaps
 the two tableaux in the basis elements.
 -/
+@[simp]
 theorem ι_involution : Function.Involutive (ι (k:=k) A) := by
     unfold Function.Involutive
     have h := Module.Basis.constr_self (cellular.c) k (LinearMap.id)
@@ -350,6 +351,13 @@ theorem ι_involution : Function.Involutive (ι (k:=k) A) := by
     }
     simp
 
+theorem ι_comp_ι : (ι (k:=k) A) ∘ₗ (ι A) = LinearMap.id := by
+    apply LinearMap.ext
+    intro a
+    rw [LinearMap.comp_apply]
+    rw [ι_involution A a]
+    simp
+
 theorem ι_antiinvolution' (a b : A) : ι (k:=k) A (a * b) = ι (k:=k) A b * ι (k:=k) A a := by
     have h := cellular.ι_antiinvolution a b
     unfold ι
@@ -385,6 +393,53 @@ theorem subcellular_preserved_by_ι :
     unfold double_tableaux_in
     simp only [Set.preimage_setOf_eq, Set.mem_setOf_eq]
     exact hs
+
+theorem ι_automorphism_on_subcellular :
+  tableau_span A {ν | ν < μ} = Submodule.comap (ι (k:=k) A) (tableau_span A {ν | ν < μ}) := by
+  have of_self : tableau_span A {ν | ν < μ} ≤ tableau_span A {ν | ν < μ} := by simp
+  have id_of_self : tableau_span A {ν | ν < μ} =
+    Submodule.comap LinearMap.id (tableau_span A {ν | ν < μ}) := by simp
+  have ι_twice : (ι (k:=k) A) ∘ₗ (ι (k:=k) A) = (LinearMap.id (R:=k)) := by
+    apply LinearMap.ext
+    intro a
+    rw [LinearMap.comp_apply]
+    rw [ι_involution A a]
+    simp
+  rw [←ι_twice] at id_of_self
+  conv_lhs at of_self => { rw [id_of_self] }
+  have tj := of_self.trans (subcellular_preserved_by_ι A)
+  have tjp := Submodule.comap_mono (R:=k) (R₂:=k) (M:=A) (M₂:=A) tj (f:=ι A)
+  have f₁ := subcellular_preserved_by_ι (k:=k) A (μ:=μ)
+  have tjp := Submodule.comap_mono (R:=k) (R₂:=k) (M:=A) (M₂:=A) f₁ (f:=ι A)
+  rw [←Submodule.comap_comp] at tjp
+  simp only [ι_comp_ι, Submodule.comap_id] at tjp
+  exact (eq_of_le_of_ge tjp f₁).symm
+
+theorem ι_automorphism_on_subcellular' : ∀ x, x ∈ tableau_span A {ν | ν < μ} ↔
+    x ∈ Submodule.comap (ι (k:=k) A) (tableau_span A {ν | ν < μ}) := by
+  intro x
+  conv_lhs => {
+    rw [ι_automorphism_on_subcellular A]
+  }
+
+theorem multiplication_rule₂ : ∀ (a : A) (μ : cellular.Λ) (s t : tableau μ),
+  (c ⟨μ, (s, t)⟩) * a ≡ ∑ (u : tableau μ), r A μ t u (ι (k:=k) A a) • (c ⟨μ, (s, u)⟩)
+  [SMOD tableau_span A {ν | ν < μ} ] := by
+    intro a μ s t
+    have kk := ι_involution (k:=k) A
+    conv_lhs => {
+      rw [←kk (c ⟨μ, (s, t)⟩ * a)]
+      rw[ι_antiinvolution']
+      rw[ι_on_basis]
+    }
+    apply SModEq.sub_mem.mpr
+    apply (ι_automorphism_on_subcellular' A _).mpr
+    simp only [ι_antiinvolution', ι_on_basis, ι_involution A a, Submodule.mem_comap, map_sub,
+      map_sum, map_smul]
+    apply SModEq.sub_mem.mp
+    have tt := multiplication_rule A (ι (k:=k) A a) μ t s
+    apply SModEq.trans tt
+    exact SModEq.refl _
 
 /-! ## The basis `c` modulo cellular ideals
 
@@ -472,7 +527,7 @@ theorem basis_sum_mod_lesser {f₁ f₂ : cellular.tableau μ → cellular.table
   simp only [Finset.univ_product_univ, Finset.mem_univ, forall_const, Prod.forall] at jj
   grind
 
-/-- If $\um_{u} f(u) c^\mu_{s,u} = \sum_{v} g(v) c^\mu_{v,t}$ modulo $A^{<\mu}$, then
+/-- If $\sum_{u} f(u) c^\mu_{s,u} = \sum_{v} g(v) c^\mu_{v,t}$ modulo $A^{<\mu}$, then
 $f(u) = \begin{cases} g(s)& u=t\\ 0\text{else}\end{cases}$.
 -/
 theorem basis_cross_sum (f g : cellular.tableau μ → k) :

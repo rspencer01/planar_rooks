@@ -4,36 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Robert A. Spencer
 -/
 import Mathlib.Data.Finset.Basic
-import Mathlib.Data.Finset.Card
 import Mathlib.Data.Fin.Basic
-import Mathlib.Data.Finset.Sort
-import Mathlib.Data.Finset.BooleanAlgebra
-import Mathlib.Data.Fintype.Basic
-import Mathlib.Data.Finset.Max
 import Mathlib.Data.Set.Defs
-import Mathlib.CategoryTheory.Category.Basic
-import Mathlib.CategoryTheory.ConcreteCategory.Basic
-import Mathlib.Algebra.Field.Basic
 import Mathlib.Data.Finsupp.Defs
-import Mathlib.Data.Finsupp.Single
 import Mathlib.LinearAlgebra.Basis.Defs
-import Mathlib.CategoryTheory.Linear.Basic
 import Mathlib.LinearAlgebra.Basis.Basic
-import Mathlib.LinearAlgebra.StdBasis
-import Mathlib.Algebra.Module.Pi
-import Mathlib.Algebra.BigOperators.Group.Finset.Basic
-import Mathlib.LinearAlgebra.Dimension.Basic
-import Mathlib.LinearAlgebra.Dimension.StrongRankCondition
-import Mathlib.LinearAlgebra.Dimension.Constructions
-import Mathlib.Data.PEquiv
-import Mathlib.Data.FunLike.Basic
-import Mathlib.Data.FunLike.Fintype
-import Mathlib.Order.Defs.PartialOrder
-import Mathlib.Data.Finset.Filter
-import Mathlib.Order.Hom.Set
 import Mathlib.Data.Finset.CastCard
-import Mathlib.Order.Fin.Basic
-import Mathlib.Logic.Equiv.Defs
 
 import PlanarRooks.OrderIso
 
