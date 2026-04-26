@@ -28,7 +28,7 @@ a factor of `δ` raised to the number of dangling strands after multiplication.
 -/
 structure Algebra (n : ℕ) (δ : k) where
   ofCoeff ::
-  coeff : (PlanarRook.Diagram n n) → k)
+  coeff : (PlanarRook.Diagram n n) →₀ k
 
 namespace Algebra
 
