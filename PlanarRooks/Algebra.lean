@@ -43,26 +43,31 @@ lemma coeff_inj {x y : Algebra n δ} : x.coeff = y.coeff ↔ x = y := (coeffEqui
 
 @[ext]
 def ext {n : ℕ} {δ : k} {x y : Algebra n δ} :
-    (∀ d : Diagram n n, x.coeff d = y.coeff d) → x = y := fun h => (coeff_inj δ).mp (Finsupp.ext h)
-
-@[ext]
-def ext' {n : ℕ} {δ : k} {x y : Algebra n δ} :
     (x.coeff = y.coeff) → x = y := fun h => (coeff_inj δ).mp h
 
+/-! ## Inherited structure from coordinate maps
+
+Some structure, such as the additive (commutative) group structure and the structure of a vector space
+over the underlying ring are inherited from the structure on finite support functions.
+-/
+
+/-- The algebra forms an additive (commutative) group. -/
 @[to_additive]
 noncomputable instance : AddCommGroup (Algebra n δ) := Equiv.addCommGroup (coeffEquiv _)
+/-- The algebra is a vector space over [R]. -/
+noncomputable instance instKModule : Module k (Algebra n δ) := Equiv.module k (coeffEquiv _)
+/-- Decidability of the algebra is equivalent to decidability on the underlying field. -/
 instance [DecidableEq k] : DecidableEq  (Algebra n δ) := Equiv.decidableEq (coeffEquiv _)
 
 @[simp]
-theorem zero_coeff (d : Diagram n n) : (0 : Algebra n δ).coeff d = 0 := rfl
+theorem coeff_zero (d : Diagram n n) : (0 : Algebra n δ).coeff d = 0 := rfl
+
+theorem add_coeff' (x₁ x₂ : Algebra n δ) :
+    (x₁ + x₂).coeff = x₁.coeff + x₂.coeff := rfl
 
 @[simp]
 theorem add_coeff (x₁ x₂ : Algebra n δ) (d : Diagram n n) :
-    (x₁ + x₂).coeff d = (x₁.coeff d) + (x₂.coeff d) := rfl
-
-/-- The planar rook algebra is a vector space over k.
--/
-noncomputable instance instKModule : Module k (Algebra n δ) := Equiv.module k (coeffEquiv _)
+    (x₁ + x₂).coeff d = x₁.coeff d + x₂.coeff d := rfl
 
 /-- The obvious `k` basis of the `PlanarRookAlgebra` is the diagram basis.
 
@@ -118,8 +123,13 @@ theorem smul_single' (d₁ : PlanarRook.Diagram n n) (c : k) :
     simp only [Algebra.smul_single δ d₁ c 1, mul_one]
 
 @[simp]
-theorem sum_coeff (f : ι → Algebra n δ) (s : Finset ι) :
-  (∑ i ∈ s, f i).coeff = ∑ i ∈ s, (f i).coeff := by sorry
+theorem sum_coeff [DecidableEq ι] (f : ι → Algebra n δ) (s : Finset ι) :
+  (∑ i ∈ s, f i).coeff = ∑ i ∈ s, (f i).coeff := by
+    refine Finset.induction_on s ?base ?step
+    · simp
+      rfl
+    · intro a s has ih
+      simp [add_coeff', has, ih]
 
 theorem sum_single (x : Algebra n δ) :
   x = ∑ d : (PlanarRook.Diagram n n), Algebra.single δ d (x.coeff d) := by
@@ -134,16 +144,17 @@ theorem add_single (d : PlanarRook.Diagram n n) (c₁ c₂ : k) :
     · simp only [h, ↓reduceIte]
     · simp only [h, ↓reduceIte, add_zero]
 
+/-! ## The unit
+-/
+
 noncomputable def one : Algebra n δ := single δ (Diagram.id n) 1
 
 noncomputable instance hasOne : One (Algebra n δ) := ⟨one δ⟩
 
-theorem one_def : (1 : Algebra n δ) = one δ := rfl
+def one_is : (1 : Algebra n δ) = single δ (Diagram.id n) 1 := rfl
 
 def one_apply (d : Diagram n n) : (1 : Algebra n δ).coeff d = if Diagram.id n = d then 1 else 0 := by
-    simp[one_def, one]
-
-def one_is : (1 : Algebra n δ) = single δ (Diagram.id n) 1 := rfl
+  simp only [one_is, single_apply]
 
 noncomputable instance addGroupWithOne : AddGroupWithOne (Algebra n δ) := {}
 
@@ -253,24 +264,11 @@ noncomputable instance nonUnitalSemiring :
     simp only [Finset.mul_sum]
     apply Finset.sum_congr rfl
     intro d₃ hd₃
-    simp only [mul_single_single]
-    rw [←Monoid.mul_assoc]
-    ring_nf
-    conv => {
-      rhs
-      arg 3
-      arg 1
-      rw [mul_assoc]
-      arg 2
-      rw [← pow_add (a := δ) (m:= Monoid.mul_exponent d₂ d₃)]
-      arg 2
-      rw [add_comm]
-      rw [←Monoid.mul_exponent_assoc d₁ d₂ d₃]
-    }
+    simp only [mul_single_single, ←Monoid.mul_assoc]
+    simp only [mul_assoc, ← pow_add (a := δ) (m := Monoid.mul_exponent d₂ d₃), add_comm,
+      ← Monoid.mul_exponent_assoc d₁ d₂ d₃]
     ring_nf
 }
-
-
 
 noncomputable instance is_semiring :
     Semiring (Algebra (k:=k) n δ) := {
@@ -451,8 +449,7 @@ noncomputable def parameter_independence (n : ℕ) (δ₁ : k) (δ₁_nonzero : 
         simp [Finset.sum_mul_sum, mul_single_single]
         ring_nf
         simp only [mul_assoc]
-        apply ext
-        intro d
+        ext d
         sorry
         -- conv => {
         --   lhs
