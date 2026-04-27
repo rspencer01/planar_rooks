@@ -132,74 +132,62 @@ elements but have obvious extensions to the entire algebra.
 /-- The multiplication map `r_basis` extended to all of `A` by linearity.
 -/
 noncomputable def r : (μ : cellular.Λ) → cellular.tableau μ → cellular.tableau μ →
-  A →ₗ[k] k := fun μ s t => (cellular.c.constr k (fun b => cellular.r_basis b μ s t))
+  A →ₗ[k] k := fun μ s t => (cellular.c.constr k (cellular.r_basis · μ s t))
 
 /-- The key requirement for cellular algebras.
 
 This is the extension of `CellularAlgebra.multiplication_rule_basis` to all of `A` by linearity.
 -/
 theorem multiplication_rule : ∀ (a : A) (μ : cellular.Λ) (s t : cellular.tableau μ),
-  a * (cellular.c ⟨μ, (s, t)⟩) ≡
-  ∑ (u : cellular.tableau μ), cellular.r A μ s u a • (cellular.c ⟨μ, (u, t)⟩)
+  a * (cellular.c ⟨μ, (s, t)⟩) ≡ ∑ u, cellular.r A μ s u a • (cellular.c ⟨μ, (u, t)⟩)
   [SMOD tableau_span A {ν | ν < μ} ] := by
-       intro a μ s t
-       rw [←cellular.c.sum_repr a]
-       simp only [Finset.sum_mul, smul_mul_assoc]
-       simp only [map_sum, LinearMap.map_smul]
-       simp only [Finset.univ.sum_smul, smul_assoc]
-       rw[Finset.sum_comm]
-       simp only [←Finset.univ.smul_sum]
-       apply SModEq.sum
-       intro i hi
-       apply SModEq.smul
-       unfold r
-       simp only [Module.Basis.constr_basis]
-       exact cellular.multiplication_rule_basis i μ s t
+    intro a μ s t
+    rw [←cellular.c.sum_repr a]
+    simp only [Finset.sum_mul, smul_mul_assoc]
+    simp only [map_sum, LinearMap.map_smul]
+    simp only [Finset.univ.sum_smul, smul_assoc]
+    rw[Finset.sum_comm]
+    simp only [←Finset.univ.smul_sum]
+    apply SModEq.sum
+    intro i hi
+    apply SModEq.smul
+    unfold r
+    simp only [Module.Basis.constr_basis]
+    exact cellular.multiplication_rule_basis i μ s t
 
-/-- Increasing the set of weights increases the span.
+/-- The map from sets of weights to subspaces is strictly monotone.
 -/
-def tableau_span_mono (S₁ S₂ : Set cellular.Λ) (h : S₁ ⊆ S₂) :
-  tableau_span A S₁ ≤ tableau_span A S₂ :=
-    Submodule.span_mono (Set.image_mono (double_tableaux_in_mono h))
+instance tableau_span_mono : StrictMono (tableau_span (k:=k) A) := by
+  intro S₁ S₂ h
+  apply lt_of_le_of_ne
+  · exact Submodule.span_mono (Set.image_mono (double_tableaux_in_mono (le_of_lt h)))
+  · have ⟨q, ⟨hq₁, hq₂⟩⟩ := Set.exists_of_ssubset h
+    unfold tableau_span
+    unfold tableau_linear_span
+    simp only [ne_eq]
+    intro h
+    let t : tableau q × tableau q := Inhabited.default
+    have kk := (Submodule.ext_iff.mp h (c ⟨q, t⟩)).mpr
+    rw[all_tableaux_range] at kk
+    have q : c ⟨q, t⟩ ∈ Submodule.span k (all_tableaux_range A S₂ c) := by
+      apply Submodule.mem_span_of_mem
+      unfold all_tableaux_range
+      unfold double_tableaux_in
+      apply (Set.mem_image _ _ _).mpr
+      use ⟨q, t⟩
+      simp [hq₁]
+    have kk₂ := kk q
+    have jj := (Module.Basis.self_mem_span_image cellular.c).mp kk₂
+    simp [double_tableaux_in] at jj
+    contradiction
 
-/-- The span of a strictly smaller set of weights is strictly smaller.
--/
-def tableau_span_mono' (S₁ S₂ : Set cellular.Λ) (h : S₁ ⊂ S₂) :
-  tableau_span A S₁ < tableau_span A S₂ := by
-    apply lt_of_le_of_ne
-    · exact tableau_span_mono A S₁ S₂ h.subset
-    · have ⟨q, ⟨hq₁, hq₂⟩⟩ := Set.exists_of_ssubset h
-      unfold tableau_span
-      unfold tableau_linear_span
-      simp only [ne_eq]
-      intro h
-      let t : tableau q × tableau q := Inhabited.default
-      have kk := (Submodule.ext_iff.mp h (c ⟨q, t⟩)).mpr
-      rw[all_tableaux_range] at kk
-      have q : c ⟨q, t⟩ ∈ Submodule.span k (all_tableaux_range A S₂ c) := by
-        apply Submodule.mem_span_of_mem
-        unfold all_tableaux_range
-        unfold double_tableaux_in
-        apply (Set.mem_image _ _ _).mpr
-        use ⟨q, t⟩
-        simp [hq₁]
-      have kk₂ := kk q
-      have jj := (Module.Basis.self_mem_span_image cellular.c).mp kk₂
-      simp [double_tableaux_in] at jj
-      contradiction
-
-theorem c_injective {μ : Λ k A} {s₁ t₁ s₂ t₂ : tableau μ}
-    (h : c ⟨μ, (s₁, t₁)⟩ = c ⟨μ, (s₂, t₂)⟩) :
-  s₁ = s₂ ∧ t₁ = t₂ := by
-    have k := Module.Basis.injective cellular.c h
-    simp only [Sigma.mk.injEq, heq_eq_eq, Prod.mk.injEq, true_and] at k
-    exact k
+instance c_injective : Function.Injective (cellular.c) :=
+  fun _ _ h =>  Module.Basis.injective cellular.c h
 
 theorem r_of_id {μ} {s u : cellular.tableau μ} :
   r A μ s u (1 : A) = if s = u then 1 else 0 := sorry
 
-theorem r_of_zero {μ} {s u : cellular.tableau μ} :
-  r A μ s u (0 : A) = 0 := by simp only [r, map_zero]
+theorem r_of_zero {μ} {s u : cellular.tableau μ} : r A μ s u (0 : A) = 0 := map_zero _
 
 theorem action_doesnt_increase_μ (a : A) (μ : cellular.Λ) (s t : cellular.tableau μ) :
   a * c ⟨μ, (s, t)⟩ ∈ cellular.tableau_span A {ν | ν ≤ μ} := by
@@ -209,7 +197,7 @@ theorem action_doesnt_increase_μ (a : A) (μ : cellular.Λ) (s t : cellular.tab
       simp only [Set.setOf_subset_setOf]
       intro a ha
       exact le_of_lt ha
-    have sst := tableau_span_mono A _ _ ss
+    have sst := StrictMono.monotone (tableau_span_mono _) ss
     have tt : ∀ x, x∈ tableau_span A {ν | ν < μ} → x ∈ tableau_span A {ν | ν ≤ μ} := by
       intro x hx
       exact sst hx
@@ -255,7 +243,7 @@ def cellular_ideal (μ : cellular.Λ) : Submodule A A := {
     simp only [Set.preimage_setOf_eq, Set.mem_setOf_eq] at tt
     have q := action_doesnt_increase_μ A c c₁.fst c₁.snd.1 c₁.snd.2
     have s : {ν | ν ≤ c₁.fst} ⊆ {ν | ν ≤ μ } := fun a ha => ha.trans tt
-    apply tableau_span_mono A _ _ s
+    apply StrictMono.monotone (tableau_span_mono _) s
     exact q
 }
 
@@ -287,7 +275,7 @@ def subcelluar_ideal (μ : cellular.Λ) : Submodule A A := {
       simp only [Set.setOf_subset_setOf]
       intro a ha
       exact lt_of_le_of_lt ha tt
-    apply tableau_span_mono A _ _ s
+    apply StrictMono.monotone (tableau_span_mono _) s
     exact q
 }
 
@@ -297,7 +285,7 @@ notation:50 A "[<" μ "]" => subcelluar_ideal A μ
 -/
 
 noncomputable def ι : A →ₗ[k] A :=
-  c.constr (S := k) (fun ⟨μ, (s, t)⟩ => c ⟨μ, (t, s)⟩)
+  c.constr (S:=k) (fun ⟨μ, (s, t)⟩ => c ⟨μ, (t, s)⟩)
 
 @[simp]
 theorem ι_on_basis (μ : cellular.Λ) (s t : cellular.tableau μ) :
@@ -352,16 +340,38 @@ theorem ι_involution : Function.Involutive (ι (k:=k) A) := by
     simp
 
 theorem ι_comp_ι : (ι (k:=k) A) ∘ₗ (ι A) = LinearMap.id := by
-    apply LinearMap.ext
-    intro a
-    rw [LinearMap.comp_apply]
-    rw [ι_involution A a]
-    simp
+  apply LinearMap.ext
+  intro a
+  rw [LinearMap.comp_apply]
+  rw [ι_involution A a]
+  simp
+
+theorem ι_surjective : Function.Surjective (ι (k:=k) A) :=
+  LinearMap.surjective_of_comp_eq_id _ _ (ι_comp_ι A)
+
+theorem ι_injective : Function.Injective (ι (k:=k) A) :=
+  LinearMap.injective_of_comp_eq_id _ _ (ι_comp_ι A)
+
+instance ι_bijective : Function.Bijective (ι (k:=k) A) :=
+  ⟨ι_injective A, ι_surjective A⟩
+
+noncomputable def ι' : A ≃ₗ[k] A := LinearEquiv.ofBijective (ι (k:=k) A) (ι_bijective A)
+
 
 theorem ι_antiinvolution' (a b : A) : ι (k:=k) A (a * b) = ι (k:=k) A b * ι (k:=k) A a := by
     have h := cellular.ι_antiinvolution a b
     unfold ι
     exact h
+
+theorem ι_antiinvolution'' (a b : A) : ι' (k:=k) A (a * b) = ι' (k:=k) A b * ι' (k:=k) A a := by
+    have h := cellular.ι_antiinvolution a b
+    unfold ι'
+    exact h
+
+theorem ι_of_id : (ι' (k:=k) A) 1 = 1 := by
+  have x := ι_antiinvolution'' (k:=k) A ((ι' (k:=k) A).invFun (1 : A)) (1 : A)
+  simp at x
+  exact x.symm
 
 @[simp]
 theorem ι_on_basis_product (μ : cellular.Λ) (s t : cellular.tableau μ)
